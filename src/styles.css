@@ -56,6 +56,7 @@
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -679,20 +680,41 @@ mark.active {
   opacity: 1;
 }
 
+/* 테마와 관계없이 항상 어두운 알약 모양으로 하단 중앙에 띄운다 */
 .toast {
   position: absolute;
   left: 50%;
-  bottom: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
   z-index: 30;
+  width: max-content;
+  max-width: calc(100% - 32px);
   transform: translateX(-50%);
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: var(--fg);
-  color: var(--bg);
-  font-size: 13px;
-  white-space: nowrap;
+  padding: 14px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  background: rgba(24, 24, 27, 0.96);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  text-align: center;
+  word-break: keep-all;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
   pointer-events: none;
-  animation: pop 0.14s ease-out;
+  animation: toast-in 0.2s ease-out;
+}
+
+.toast.action {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
 }
 
 @media (max-width: 640px) {

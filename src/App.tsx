@@ -6,7 +6,7 @@ import { SearchBar } from './components/SearchBar'
 import { SettingsPanel } from './components/SettingsPanel'
 import { Viewer, type MatchRange } from './components/Viewer'
 import { ENCODINGS, decode, detectEncoding, type EncodingChoice } from './lib/decode'
-import { formatBytes, useDebounced, useResolvedTheme } from './lib/hooks'
+import { formatBytes, useDebounced, useResolvedTheme, useUpdateAvailable } from './lib/hooks'
 import { findMatches } from './lib/search'
 import { loadPosition, loadSettings, savePosition, saveSettings } from './lib/storage'
 import { FONT_SIZE, THEMES, clamp, type Settings } from './settings'
@@ -53,6 +53,7 @@ export default function App() {
   const [dragging, setDragging] = useState(false)
   const [progress, setProgress] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
+  const updateAvailable = useUpdateAvailable()
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -399,7 +400,17 @@ export default function App() {
             <CloseIcon />
           </button>
         )}
-        {toast && <div className="toast">{toast}</div>}
+        {toast ? (
+          <div className="toast" role="status">
+            {toast}
+          </div>
+        ) : (
+          updateAvailable && (
+            <button className="toast action" onClick={() => location.reload()}>
+              새 버전이 준비됐어요. 새로고침하면 바로 반영됩니다.
+            </button>
+          )
+        )}
       </main>
 
       {doc && (
