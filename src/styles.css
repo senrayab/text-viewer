@@ -1,0 +1,723 @@
+:root {
+  --ui-font: 'Noto Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
+:root,
+[data-theme='light'] {
+  --bg: #fbfbf9;
+  --fg: #2a2a28;
+  --muted: #8b8b86;
+  --faint: #cfcfca;
+  --border: #ececea;
+  --surface: #ffffff;
+  --hover: rgba(0, 0, 0, 0.05);
+  --accent: #2f6fde;
+  --mark: rgba(255, 200, 0, 0.35);
+  --mark-active: rgba(255, 140, 0, 0.6);
+  --selection: rgba(47, 111, 222, 0.18);
+  --overlay: rgba(251, 251, 249, 0.9);
+  --shadow: 0 10px 32px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+  color-scheme: light;
+}
+
+[data-theme='sepia'] {
+  --bg: #f5eddb;
+  --fg: #4f3f2e;
+  --muted: #9a8a70;
+  --faint: #d3c5a6;
+  --border: #e7dcc2;
+  --surface: #fbf5e8;
+  --hover: rgba(90, 64, 20, 0.07);
+  --accent: #a0662a;
+  --mark: rgba(230, 170, 40, 0.35);
+  --mark-active: rgba(215, 115, 20, 0.55);
+  --selection: rgba(160, 102, 42, 0.2);
+  --overlay: rgba(245, 237, 219, 0.9);
+  --shadow: 0 10px 32px rgba(80, 60, 20, 0.1), 0 1px 3px rgba(80, 60, 20, 0.08);
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --bg: #161616;
+  --fg: #d4d4d0;
+  --muted: #7c7c78;
+  --faint: #45453f;
+  --border: #262626;
+  --surface: #1f1f1f;
+  --hover: rgba(255, 255, 255, 0.06);
+  --accent: #7aa7ff;
+  --mark: rgba(255, 200, 0, 0.22);
+  --mark-active: rgba(255, 160, 0, 0.55);
+  --selection: rgba(122, 167, 255, 0.25);
+  --overlay: rgba(22, 22, 22, 0.9);
+  --shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--ui-font);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+::selection {
+  background: var(--selection);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+kbd {
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+/* ── 레이아웃 ─────────────────────────────── */
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  height: 52px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 12px 0 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+}
+
+.title .name,
+.title .brand {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title .brand {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.status {
+  height: 30px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  font-size: 12px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.status .spacer {
+  flex: 1;
+}
+
+.status select {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  padding: 3px 6px;
+  margin-left: -6px;
+  border-radius: 5px;
+  cursor: pointer;
+  outline: none;
+}
+
+.status select:hover {
+  background: var(--hover);
+  color: var(--fg);
+}
+
+.status option {
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.focus .toolbar,
+.focus .status {
+  display: none;
+}
+
+/* ── 버튼 ─────────────────────────────────── */
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--fg);
+}
+
+.icon-btn.on {
+  background: var(--hover);
+  color: var(--fg);
+}
+
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.icon-btn.small {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.icon-btn.text {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.primary {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 20px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.primary:hover {
+  opacity: 0.85;
+}
+
+/* ── 본문 ─────────────────────────────────── */
+
+.reader {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  outline: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--faint) transparent;
+}
+
+.content {
+  max-width: calc(var(--maxw) + 80px);
+  margin: 0 auto;
+  padding: 56px 40px 40vh;
+  font-family: var(--font);
+  font-size: var(--fs);
+  line-height: var(--lh);
+  color: var(--fg);
+  tab-size: 4;
+  font-kerning: normal;
+}
+
+.line {
+  display: flex;
+  align-items: baseline;
+  min-height: calc(1em * var(--lh));
+  /* 화면 밖 줄은 렌더링을 건너뛰어 큰 파일도 가볍게 연다 */
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto calc(1em * var(--lh));
+}
+
+.lt {
+  flex: 1;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.content.nowrap {
+  max-width: none;
+  width: max-content;
+  min-width: 100%;
+}
+
+.nowrap .line {
+  width: max-content;
+  min-width: 100%;
+}
+
+.nowrap .lt {
+  white-space: pre;
+}
+
+.ln {
+  display: none;
+  flex: 0 0 var(--ln-w);
+  padding-right: 1.6em;
+  box-sizing: content-box;
+  text-align: right;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.72em;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.show-ln .ln {
+  display: block;
+}
+
+.show-ln {
+  /* 줄 번호 너비만큼 왼쪽으로 내어 본문 정렬을 유지 */
+  padding-left: 16px;
+}
+
+mark {
+  background: var(--mark);
+  color: inherit;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--mark);
+}
+
+mark.active {
+  background: var(--mark-active);
+  box-shadow: 0 0 0 2px var(--mark-active);
+}
+
+.line.flash {
+  animation: flash 1.4s ease-out;
+}
+
+@keyframes flash {
+  from {
+    background: var(--mark);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+.progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  z-index: 5;
+  background: var(--accent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ── 떠 있는 바 (검색 · 줄 이동) ──────────── */
+
+.floating {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 4px 4px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  animation: pop 0.14s ease-out;
+}
+
+.floating input {
+  width: 220px;
+  height: 30px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+}
+
+.floating input::placeholder {
+  color: var(--muted);
+}
+
+.floating .count {
+  min-width: 64px;
+  padding-right: 6px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* ── 설정 패널 ────────────────────────────── */
+
+.panel {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 20;
+  width: 300px;
+  max-height: calc(100% - 16px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  animation: pop 0.14s ease-out;
+}
+
+.field .label {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.field.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.segmented {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--hover);
+}
+
+.segmented button {
+  flex: 1;
+  padding: 6px 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.segmented button.on {
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.swatches button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.swatches button:hover {
+  background: var(--hover);
+}
+
+.swatches button.on {
+  color: var(--fg);
+}
+
+.sw {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(128, 128, 128, 0.35);
+}
+
+.swatches button.on .sw {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+}
+
+.sw-system {
+  background: linear-gradient(135deg, #fbfbf9 50%, #161616 50%);
+}
+.sw-light {
+  background: #fbfbf9;
+}
+.sw-sepia {
+  background: #f5eddb;
+}
+.sw-dark {
+  background: #161616;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  cursor: default;
+}
+
+.row kbd {
+  margin-left: 4px;
+  font-size: 10px;
+  padding: 2px 5px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.stepper .value {
+  min-width: 44px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.switch {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: var(--faint);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s;
+}
+
+.switch.on {
+  background: var(--accent);
+}
+
+.switch.on::after {
+  transform: translateX(14px);
+}
+
+/* ── 빈 화면 ──────────────────────────────── */
+
+.empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: auto;
+}
+
+.empty-inner {
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+}
+
+.drop-zone {
+  padding: 52px 32px 40px;
+  border: 1.5px dashed var(--faint);
+  border-radius: 18px;
+}
+
+.drop-zone h1 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.drop-zone p {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.drop-zone .note {
+  margin: 24px 0 0;
+  font-size: 12px;
+}
+
+.drop-zone .error {
+  margin: 12px 0 0;
+  color: #d9534f;
+}
+
+.shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 24px;
+  margin: 32px 0 0;
+  padding: 0 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.shortcuts div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.shortcuts dd {
+  margin: 0;
+}
+
+/* ── 기타 ─────────────────────────────────── */
+
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  padding: 16px;
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+.drop-overlay div {
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--accent);
+  border-radius: 18px;
+  font-size: 16px;
+  color: var(--fg);
+}
+
+.focus-exit {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  z-index: 10;
+  opacity: 0.25;
+}
+
+.focus-exit:hover {
+  opacity: 1;
+}
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  z-index: 30;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: pop 0.14s ease-out;
+}
+
+@media (max-width: 640px) {
+  .content {
+    padding: 28px 20px 40vh;
+  }
+
+  .floating {
+    left: 12px;
+    right: 12px;
+  }
+
+  .floating input {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  .panel {
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+
+  .shortcuts {
+    display: none;
+  }
+}
