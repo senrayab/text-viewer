@@ -1,5 +1,6 @@
 :root {
-  --ui-font: 'Noto Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  /* Tossface는 반드시 본문 글꼴 뒤에 둔다 — 앞에 두면 Chrome이 숫자까지 Tossface로 그린다 */
+  --ui-font: 'Pretendard Variable', Pretendard, Tossface, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
 
 :root,
@@ -70,6 +71,8 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--ui-font);
+  /* UI 전체는 자간을 좁히고, 본문(.content)만 기본 자간을 쓴다 */
+  letter-spacing: -0.025em;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s, color 0.2s;
 }
@@ -78,9 +81,12 @@ body {
   background: var(--selection);
 }
 
-button {
+button,
+input,
+select {
   font: inherit;
   color: inherit;
+  letter-spacing: inherit;
 }
 
 kbd {
@@ -130,7 +136,6 @@ kbd {
 
 .title .brand {
   font-weight: 600;
-  letter-spacing: -0.01em;
 }
 
 .main {
@@ -144,9 +149,9 @@ kbd {
   flex: none;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   padding: 0 16px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
   border-top: 1px solid var(--border);
   font-variant-numeric: tabular-nums;
@@ -224,11 +229,6 @@ kbd {
   border-radius: 6px;
 }
 
-.icon-btn.text {
-  font-size: 12px;
-  font-weight: 600;
-}
-
 .primary {
   border: 0;
   border-radius: 8px;
@@ -264,6 +264,7 @@ kbd {
   font-size: var(--fs);
   line-height: var(--lh);
   color: var(--fg);
+  letter-spacing: normal;
   tab-size: 4;
   font-kerning: normal;
 }
@@ -607,7 +608,7 @@ mark.active {
   margin: 0 0 8px;
   font-size: 20px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.035em;
 }
 
 .drop-zone p {
@@ -689,15 +690,14 @@ mark.active {
   width: max-content;
   max-width: calc(100% - 32px);
   transform: translateX(-50%);
-  padding: 14px 24px;
+  padding: 11px 18px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  border-radius: 14px;
   background: rgba(24, 24, 27, 0.96);
   color: #fff;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.45;
-  letter-spacing: -0.01em;
   text-align: center;
   word-break: keep-all;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);

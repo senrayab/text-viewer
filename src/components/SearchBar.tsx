@@ -1,4 +1,4 @@
-import { CloseIcon, DownIcon, UpIcon } from './Icons'
+import { CaseIcon, CloseIcon, DownIcon, UpIcon } from './Icons'
 
 interface SearchBarProps {
   query: string
@@ -38,11 +38,11 @@ export function SearchBar(props: SearchBarProps) {
       />
       <span className="count">{status}</span>
       <button
-        className={`icon-btn small text${props.caseSensitive ? ' on' : ''}`}
+        className={`icon-btn small${props.caseSensitive ? ' on' : ''}`}
         onClick={props.onToggleCase}
         title="대소문자 구분"
       >
-        Aa
+        <CaseIcon />
       </button>
       <button className="icon-btn small" onClick={props.onPrev} disabled={!count} title="이전 (Shift+Enter)">
         <UpIcon />

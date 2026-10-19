@@ -29,14 +29,20 @@ export const THEMES: { value: ThemeChoice; label: string }[] = [
   { value: 'dark', label: '다크' },
 ]
 
+// 이모지는 Tossface로 그린다. 반드시 본문 글꼴 뒤에 둬야 한다 —
+// 앞에 두면 unicode-range에서 숫자를 빼도 Chrome이 숫자와 마침표를 Tossface로 그린다.
 export const FONTS: { value: FontChoice; label: string; stack: string }[] = [
   {
     value: 'sans',
     label: '고딕',
-    stack: '"Noto Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+    stack: '"Pretendard Variable", Pretendard, Tossface, system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
   },
-  { value: 'serif', label: '명조', stack: '"Noto Serif KR", "Nanum Myeongjo", "Batang", Georgia, serif' },
-  { value: 'mono', label: '고정폭', stack: '"JetBrains Mono", "D2Coding", Consolas, "Noto Sans KR", monospace' },
+  { value: 'serif', label: '명조', stack: '"Noto Serif KR", "Nanum Myeongjo", Tossface, "Batang", Georgia, serif' },
+  {
+    value: 'mono',
+    label: '고정폭',
+    stack: '"JetBrains Mono", "D2Coding", Consolas, "Pretendard Variable", Pretendard, Tossface, monospace',
+  },
 ]
 
 export const WIDTHS: { value: WidthChoice; label: string; css: string }[] = [
