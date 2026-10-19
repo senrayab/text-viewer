@@ -1,0 +1,159 @@
+import { useCallback, useEffect, useState } from 'react'
+import { PRIVACY_URL } from '../config'
+import { createBackup, restoreBackup, type BackupSummary } from '../lib/backup'
+import {
+  downloadBackup,
+  driveConfigured,
+  findBackup,
+  isSignedIn,
+  preloadGoogle,
+  signIn,
+  uploadBackup,
+  type DriveBackup,
+} from '../lib/drive'
+import { formatBytes } from '../lib/hooks'
+import { CloseIcon, CloudIcon } from './Icons'
+
+interface BackupDialogProps {
+  onClose: () => void
+  onRestored: (summary: BackupSummary) => void
+}
+
+type Busy = 'connect' | 'backup' | 'restore' | null
+
+const ERRORS: Record<string, string> = {
+  'google-unavailable': '구글에 연결할 수 없어요. 인터넷 연결을 확인해 주세요.',
+  'popup_closed': '로그인 창이 닫혔어요.',
+  'popup_failed_to_open': '로그인 창을 열 수 없어요. 팝업 차단을 확인해 주세요.',
+  'access_denied': '드라이브 접근을 허용해야 백업할 수 있어요.',
+  'signed-out': '로그인이 만료됐어요. 다시 연결해 주세요.',
+  'invalid-backup': '백업 파일을 읽을 수 없어요.',
+}
+
+function errorMessage(e: unknown) {
+  const code = e instanceof Error ? e.message : ''
+  return ERRORS[code] ?? '문제가 생겼어요. 잠시 후 다시 시도해 주세요.'
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleString('ko-KR', { dateStyle: 'medium', timeStyle: 'short' })
+}
+
+/** 구글 드라이브의 앱 전용 공간에 서재를 백업하고 불러온다 */
+export function BackupDialog({ onClose, onRestored }: BackupDialogProps) {
+  const [signedIn, setSignedIn] = useState(isSignedIn)
+  /** undefined: 아직 모름, null: 백업 없음 */
+  const [backup, setBackup] = useState<DriveBackup | null>()
+  const [busy, setBusy] = useState<Busy>(null)
+  const [message, setMessage] = useState<{ text: string; error?: boolean }>()
+
+  const loadInfo = useCallback(async () => {
+    setBackup(undefined)
+    setBackup((await findBackup()) ?? null)
+  }, [])
+
+  useEffect(() => {
+    if (!driveConfigured) return
+    preloadGoogle().catch((e) => setMessage({ text: errorMessage(e), error: true }))
+    if (isSignedIn()) loadInfo().catch((e) => setMessage({ text: errorMessage(e), error: true }))
+  }, [loadInfo])
+
+  // 로그인 창은 버튼을 누른 처리 안에서 곧바로 띄워야 막히지 않는다 — 그래서 signIn()을 먼저 부른다
+  const run = (kind: Busy, task: () => Promise<void>) => {
+    const auth = signIn()
+    setBusy(kind)
+    setMessage(undefined)
+    auth
+      .then(() => {
+        setSignedIn(true)
+        return task()
+      })
+      .catch((e) => setMessage({ text: errorMessage(e), error: true }))
+      .finally(() => setBusy(null))
+  }
+
+  const connect = () => run('connect', loadInfo)
+
+  const backupNow = () =>
+    run('backup', async () => {
+      const { blob, works, episodes } = await createBackup()
+      await uploadBackup(blob)
+      await loadInfo()
+      setMessage({ text: `백업했어요 · 작품 ${works}개, ${episodes}편` })
+    })
+
+  const restore = () => {
+    if (!backup) return
+    const ok = confirm(
+      `${formatDate(backup.modifiedTime)} 백업으로 지금 서재를 바꿀까요?\n지금 서재에만 있는 작품은 사라져요.`,
+    )
+    if (!ok) return
+    run('restore', async () => {
+      const summary = await restoreBackup(await downloadBackup(backup.id))
+      onRestored(summary)
+    })
+  }
+
+  let status = '연결 전'
+  if (signedIn) {
+    if (backup === undefined) status = '확인 중…'
+    else if (backup === null) status = '아직 없어요'
+    else status = `${formatDate(backup.modifiedTime)} · ${formatBytes(backup.size)}`
+  }
+
+  return (
+    <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
+      <div className="modal" role="dialog" aria-label="구글 드라이브 백업">
+        <button className="icon-btn modal-close" onClick={onClose} title="닫기" disabled={!!busy}>
+          <CloseIcon />
+        </button>
+        <header className="panel-head">
+          <h2>구글 드라이브 백업</h2>
+          <p>서재를 내 구글 드라이브에 보관하고, 다른 기기에서 불러올 수 있어요.</p>
+        </header>
+
+        {!driveConfigured ? (
+          <p className="backup-note">구글 드라이브 연결 설정이 아직 안 됐어요.</p>
+        ) : (
+          <>
+            <div className="card">
+              <div className="row">
+                <span className="row-label">
+                  <span className="chip chip-sky">
+                    <CloudIcon />
+                  </span>
+                  마지막 백업
+                </span>
+                {signedIn ? (
+                  <span className="backup-status">{status}</span>
+                ) : (
+                  <button className="pill small" onClick={connect} disabled={!!busy}>
+                    {busy === 'connect' ? '연결 중…' : '구글 계정 연결'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <p className="backup-note">
+              작품, 편 내용, 표지, 읽은 위치가 파일 하나로 저장돼요. 앱 전용 공간이라 드라이브 목록에는 보이지 않아요.{' '}
+              <a href={PRIVACY_URL} target="_blank" rel="noopener">
+                개인정보처리방침
+              </a>
+            </p>
+
+            {message && <p className={`backup-message${message.error ? ' error' : ''}`}>{message.text}</p>}
+
+            <div className="modal-actions">
+              <button className="ghost" onClick={restore} disabled={!backup || !!busy}>
+                {busy === 'restore' ? '불러오는 중…' : '불러오기'}
+              </button>
+              <button className="primary" onClick={backupNow} disabled={!!busy}>
+                {busy === 'backup' ? '백업 중…' : '지금 백업하기'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  Cloud,
   Ellipsis,
   FolderOpen,
   History,
@@ -84,3 +85,7 @@ export const DoneIcon = icon(CircleCheck, 18)
 export const RecentDotIcon = () => <CircleSmall size={12} strokeWidth={0} fill="currentColor" aria-hidden />
 export const PhoneIcon = icon(Smartphone, 18)
 export const ShareIcon = icon(Share, 14)
+
+// 백업
+export const CloudIcon = icon(Cloud, 16)
+export const ChevronIcon = icon(ChevronRight, 16)

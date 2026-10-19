@@ -1635,6 +1635,61 @@ select.text-input {
   cursor: pointer;
 }
 
+.modal {
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.backup-note {
+  margin: 0;
+  font-size: var(--ui-sm);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.backup-note a,
+.panel-foot {
+  color: var(--muted);
+  text-underline-offset: 3px;
+}
+
+.panel-foot {
+  align-self: center;
+  font-size: var(--ui-xs);
+}
+
+.backup-status {
+  font-size: var(--ui-sm);
+  color: var(--muted);
+  text-align: right;
+}
+
+.backup-message {
+  margin: 0;
+  font-size: var(--ui-sm);
+  font-weight: 500;
+}
+
+.backup-message.error {
+  color: #c4553a;
+}
+
+.row-chevron {
+  display: inline-flex;
+  color: var(--muted);
+}
+
+.modal-actions button:disabled,
+.pill:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;

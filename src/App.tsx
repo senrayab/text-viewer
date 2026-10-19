@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AddDialog } from './components/AddDialog'
+import { BackupDialog } from './components/BackupDialog'
 import { EmptyState } from './components/EmptyState'
 import { GotoBar } from './components/GotoBar'
 import {
@@ -102,6 +103,7 @@ export default function App() {
 
   // ── UI 상태 ───────────────────────────────────────────
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [backupOpen, setBackupOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [gotoOpen, setGotoOpen] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
@@ -773,7 +775,17 @@ export default function App() {
             onClose={closeGoto}
           />
         )}
-        {settingsOpen && <SettingsPanel settings={settings} onChange={updateSetting} onClose={closeSettings} />}
+        {settingsOpen && (
+          <SettingsPanel
+            settings={settings}
+            onChange={updateSetting}
+            onClose={closeSettings}
+            onOpenBackup={() => {
+              setSettingsOpen(false)
+              setBackupOpen(true)
+            }}
+          />
+        )}
 
         {focusMode && (
           <button className="icon-btn focus-exit" onClick={toggleFocus} title="집중 모드 종료 (Esc)">
@@ -823,6 +835,18 @@ export default function App() {
           works={library.map((s) => s.work)}
           onCancel={() => setAdding(null)}
           onConfirm={confirmAdd}
+        />
+      )}
+
+      {backupOpen && (
+        <BackupDialog
+          onClose={() => setBackupOpen(false)}
+          onRestored={async ({ works, episodes }) => {
+            setBackupOpen(false)
+            await refreshLibrary()
+            setPositions(readPositions())
+            showToast(`백업에서 작품 ${works}개, ${episodes}편을 불러왔어요.`, 2600)
+          }}
         />
       )}
 

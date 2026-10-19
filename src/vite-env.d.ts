@@ -31,6 +31,32 @@ interface WindowEventMap {
   beforeinstallprompt: BeforeInstallPromptEvent
 }
 
+// 구글 로그인(Google Identity Services) — 드라이브 백업에서 쓰는 부분만
+interface GoogleTokenResponse {
+  access_token?: string
+  expires_in?: number | string
+  error?: string
+}
+
+interface GoogleTokenClient {
+  requestAccessToken(options?: { prompt?: string }): void
+}
+
+interface Window {
+  google?: {
+    accounts?: {
+      oauth2?: {
+        initTokenClient(config: {
+          client_id: string
+          scope: string
+          callback: (response: GoogleTokenResponse) => void
+          error_callback?: (error: { type?: string }) => void
+        }): GoogleTokenClient
+      }
+    }
+  }
+}
+
 interface DataTransferItem {
   getAsFileSystemHandle?(): Promise<FileSystemHandle | null>
 }

@@ -1,11 +1,23 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { PRIVACY_URL } from '../config'
 import { FONT_SIZE, FONTS, LINE_HEIGHT, THEMES, WIDTHS, clamp, type Settings } from '../settings'
-import { FontSizeIcon, LineHeightIcon, LineNumberIcon, MinusIcon, PlusIcon, RecentIcon, WrapIcon } from './Icons'
+import {
+  ChevronIcon,
+  CloudIcon,
+  FontSizeIcon,
+  LineHeightIcon,
+  LineNumberIcon,
+  MinusIcon,
+  PlusIcon,
+  RecentIcon,
+  WrapIcon,
+} from './Icons'
 
 interface SettingsPanelProps {
   settings: Settings
   onChange: <K extends keyof Settings>(key: K, value: Settings[K]) => void
   onClose: () => void
+  onOpenBackup: () => void
 }
 
 /** 항목 앞 아이콘 칩의 은은한 바탕색 */
@@ -115,7 +127,7 @@ function Toggle({
   )
 }
 
-export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProps) {
+export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: SettingsPanelProps) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -229,8 +241,20 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
             checked={settings.rememberRecent}
             onChange={(v) => onChange('rememberRecent', v)}
           />
+          <button className="row action" onClick={onOpenBackup}>
+            <RowLabel icon={<CloudIcon />} tone="sky">
+              구글 드라이브 백업
+            </RowLabel>
+            <span className="row-chevron">
+              <ChevronIcon />
+            </span>
+          </button>
         </div>
       </Section>
+
+      <a className="panel-foot" href={PRIVACY_URL} target="_blank" rel="noopener">
+        개인정보처리방침
+      </a>
     </div>
   )
 }

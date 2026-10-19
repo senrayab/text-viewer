@@ -29,7 +29,7 @@ export interface Position {
   progress?: number
 }
 
-type Positions = Record<string, Position>
+export type Positions = Record<string, Position>
 
 export function readPositions(): Positions {
   try {
@@ -44,14 +44,31 @@ export function loadPosition(key: string): number {
   return readPositions()[key]?.line ?? 1
 }
 
+function writePositions(all: Positions) {
+  const recent = Object.entries(all)
+    .sort((a, b) => b[1].t - a[1].t)
+    .slice(0, MAX_POSITIONS)
+  localStorage.setItem(POSITIONS_KEY, JSON.stringify(Object.fromEntries(recent)))
+}
+
 export function savePosition(key: string, line: number, progress: number) {
   try {
     const all = readPositions()
     all[key] = { line, t: Date.now(), progress }
-    const recent = Object.entries(all)
-      .sort((a, b) => b[1].t - a[1].t)
-      .slice(0, MAX_POSITIONS)
-    localStorage.setItem(POSITIONS_KEY, JSON.stringify(Object.fromEntries(recent)))
+    writePositions(all)
+  } catch {
+    // 무시
+  }
+}
+
+/** 백업에서 가져온 읽은 위치를 합친다. 같은 파일이면 더 최근에 읽은 쪽을 남긴다. */
+export function mergePositions(incoming: Positions) {
+  try {
+    const all = readPositions()
+    for (const [key, value] of Object.entries(incoming)) {
+      if (!all[key] || all[key].t < value.t) all[key] = value
+    }
+    writePositions(all)
   } catch {
     // 무시
   }
