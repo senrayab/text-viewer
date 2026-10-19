@@ -1,24 +1,37 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import {
   continueEpisode,
-  episodeBadge,
   episodeKey,
   episodeStatus,
+  workProgress,
   type Episode,
   type WorkSummary,
 } from '../lib/library'
 import type { Position } from '../lib/storage'
-import { Cover, hueOf } from './Cover'
-import { CoverIcon, CoverRemoveIcon, EditIcon, PlusIcon, TrashIcon } from './Icons'
+import { Cover, workHue } from './Cover'
+import {
+  BookIcon,
+  CoverIcon,
+  CoverRemoveIcon,
+  DoneIcon,
+  EditIcon,
+  PlusIcon,
+  ReadingIcon,
+  SortIcon,
+  TrashIcon,
+  UnreadIcon,
+} from './Icons'
 
-/** 편 목록의 작은 표지 — 작품 표지와 같은 색으로 편 번호를 보여준다 */
-function EpisodeThumb({ hue, number, unit }: { hue: number; number: string; unit: string }) {
-  return (
-    <span className="ep-thumb" style={{ '--h': hue } as CSSProperties}>
-      <b>{number}</b>
-      <small>{unit}</small>
-    </span>
-  )
+type EpisodeOrder = 'first' | 'latest'
+
+const ORDER_KEY = 'text-viewer:episode-order'
+
+function loadOrder(): EpisodeOrder {
+  try {
+    return localStorage.getItem(ORDER_KEY) === 'latest' ? 'latest' : 'first'
+  } catch {
+    return 'first'
+  }
 }
 
 interface WorkDetailProps {
@@ -44,14 +57,24 @@ export function WorkDetail({
 }: WorkDetailProps) {
   const { work, episodes } = summary
   const [editing, setEditing] = useState(false)
+  const [order, setOrder] = useState<EpisodeOrder>(loadOrder)
+
+  const toggleOrder = () => {
+    const nextOrder = order === 'first' ? 'latest' : 'first'
+    setOrder(nextOrder)
+    try {
+      localStorage.setItem(ORDER_KEY, nextOrder)
+    } catch {
+      // 무시
+    }
+  }
   const [title, setTitle] = useState(work.title)
   useEffect(() => setTitle(work.title), [work.title])
 
   const statuses = episodes.map((e) => episodeStatus(positions[episodeKey(e)]))
-  const hue = hueOf(work.title)
-  const read = statuses.filter((s) => s.finished).length
-  const next = continueEpisode(summary, positions)
-  const started = !!positions[episodeKey(next)]
+  const progress = workProgress(summary, positions)
+  const { episode: next, turn } = continueEpisode(summary, positions)
+  const style = { '--h': workHue(work) } as CSSProperties
 
   const commitTitle = () => {
     const trimmed = title.trim()
@@ -59,10 +82,12 @@ export function WorkDetail({
     else setTitle(work.title)
   }
 
+  const ctaLabel = { start: '읽기 시작', continue: '이어 읽기', next: '다음 편 읽기', restart: '처음부터 다시 읽기' }[turn]
+
   return (
     <div className="page-scroll">
-      <div className="page work">
-        <header className="work-head">
+      <div className="page work" style={style}>
+        <header className="work-hero">
           <div className="work-cover">
             <Cover title={work.title} image={work.cover} size="sm" />
           </div>
@@ -79,22 +104,27 @@ export function WorkDetail({
             ) : (
               <h1>{work.title}</h1>
             )}
-            <p>
-              {episodes.length}편{read ? ` · ${read}편 읽음` : ''}
-            </p>
-            <div className="work-actions">
-              <button className="primary" onClick={() => onOpenEpisode(next)}>
-                {started ? `이어 읽기 · ${next.title}` : '처음부터 읽기'}
-              </button>
-              <button
-                className={`icon-btn${editing ? ' on' : ''}`}
-                onClick={() => setEditing((v) => !v)}
-                title={editing ? '편집 끝내기' : '편집'}
-              >
-                <EditIcon />
-              </button>
+            <div className="stats">
+              <span className="stat">
+                <b>{episodes.length}</b>편
+              </span>
+              <span className="stat">
+                <b>{progress.done ? 100 : progress.percent}</b>% 읽음
+              </span>
+              {episodes.length > 1 && (
+                <span className="stat">
+                  <b>{episodes.length - progress.finished}</b>편 남음
+                </span>
+              )}
             </div>
           </div>
+          <button
+            className={`round-btn hero-edit${editing ? ' dark' : ''}`}
+            onClick={() => setEditing((v) => !v)}
+            title={editing ? '편집 끝내기' : '편집'}
+          >
+            <EditIcon />
+          </button>
         </header>
 
         {editing && (
@@ -147,23 +177,42 @@ export function WorkDetail({
         )}
 
         <section className="section">
-          <h3>목록</h3>
-          <ul className="card episodes">
-            {episodes.map((e, i) => {
-              const status = statuses[i]
+          <div className="section-head">
+            <div className="section-title">
+              <h3>
+                목록 <span className="count">{episodes.length}</span>
+              </h3>
+              {episodes.length > 1 && (
+                <button className="sort-btn" onClick={toggleOrder} title="정렬 순서 바꾸기">
+                  <SortIcon />
+                  {order === 'first' ? '1편부터' : '최신순'}
+                </button>
+              )}
+            </div>
+            <button className="pill small with-icon work-cta" onClick={() => onOpenEpisode(next)}>
+              <BookIcon size={14} />
+              {ctaLabel}
+              {episodes.length > 1 && ` · ${next.title}`}
+            </button>
+          </div>
+          {/* 편마다 상태 아이콘을 세로선으로 이은 타임라인. 줄 전체를 누르면 열리고, 읽을 차례인 편은 줄 배경으로 강조한다. */}
+          <ol className="timeline">
+            {(order === 'first' ? episodes : [...episodes].reverse()).map((e) => {
+              const status = statuses[episodes.indexOf(e)]
+              // 전부 다 읽었으면 강조할 편이 없다
+              const isNext = turn !== 'restart' && e.id === next.id
+              const state = status.finished ? ' done' : status.started ? ' reading' : ''
               return (
-                <li key={e.id} className="row">
-                  <button className="ep" onClick={() => onOpenEpisode(e)}>
-                    <EpisodeThumb hue={hue} {...episodeBadge(e, i)} />
-                    <span className="ep-body">
-                      <span className="ep-title">{e.title}</span>
-                      <span className={`ep-progress${status.finished ? ' done' : ''}`}>
-                        <span className="ep-state">{status.label}</span>
-                        <span className="bar">
-                          <span style={{ width: `${status.percent}%` }} />
-                        </span>
-                      </span>
+                <li key={e.id} className={`tl-item${state}${isNext ? ' next' : ''}`}>
+                  <button className="tl-body" onClick={() => onOpenEpisode(e)}>
+                    <span className="tl-icon">
+                      {status.finished ? <DoneIcon /> : status.started ? <ReadingIcon /> : <UnreadIcon />}
                     </span>
+                    <span className="tl-title">{e.title}</span>
+                    <span className="bar">
+                      <span style={{ width: `${status.percent}%` }} />
+                    </span>
+                    <span className="tl-state">{status.label}</span>
                   </button>
                   {editing && (
                     <button className="icon-btn small" onClick={() => onDeleteEpisode(e)} title="이 편 삭제">
@@ -173,7 +222,7 @@ export function WorkDetail({
                 </li>
               )
             })}
-          </ul>
+          </ol>
         </section>
       </div>
     </div>

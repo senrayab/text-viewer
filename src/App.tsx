@@ -26,6 +26,7 @@ import {
   deleteEpisode,
   deleteWork,
   episodeKey,
+  extractHue,
   groupFiles,
   listLibrary,
   loadEpisodeFile,
@@ -274,10 +275,11 @@ export default function App() {
     async (groups: PendingGroup[]) => {
       setAdding(null)
       try {
-        await addToLibrary(groups)
+        const { added, skipped } = await addToLibrary(groups)
         await refreshLibrary()
-        const count = groups.reduce((n, g) => n + g.files.length, 0)
-        showToast(count > 1 ? `${count}편을 서재에 담았어요.` : '서재에 담았어요.')
+        if (!added) showToast(skipped > 1 ? `${skipped}편 모두 이미 서재에 있어요.` : '이미 서재에 있는 편이에요.', 2600)
+        else if (skipped) showToast(`${added}편을 담았어요. 이미 있는 ${skipped}편은 제외했어요.`, 3000)
+        else showToast(added > 1 ? `${added}편을 서재에 담았어요.` : '서재에 담았어요.')
       } catch {
         showToast('서재에 담지 못했어요. 저장 공간을 확인해 주세요.', 2600)
       }
@@ -315,7 +317,9 @@ export default function App() {
 
   const changeCover = async (summary: WorkSummary, file: File | null) => {
     try {
-      await updateWork(summary.work.id, { cover: file ? await prepareCover(file) : undefined })
+      const cover = file ? await prepareCover(file) : undefined
+      const coverHue = cover && (await extractHue(cover))
+      await updateWork(summary.work.id, { cover, coverHue })
       await refreshLibrary()
     } catch {
       showToast('이 이미지는 표지로 쓸 수 없어요.')

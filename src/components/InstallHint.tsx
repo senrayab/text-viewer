@@ -27,7 +27,7 @@ export function InstallHint() {
           <>
             <strong>앱으로 설치해 두세요</strong>
             <p>홈 화면에서 앱처럼 바로 열 수 있어요.</p>
-            <button className="primary small" onClick={install}>
+            <button className="pill small dark" onClick={install}>
               설치하기
             </button>
           </>

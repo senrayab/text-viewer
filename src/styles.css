@@ -209,7 +209,7 @@ kbd {
   place-items: center;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 50%;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
@@ -234,13 +234,12 @@ kbd {
 .icon-btn.small {
   width: 28px;
   height: 28px;
-  border-radius: 6px;
 }
 
 .primary {
   border: 0;
-  border-radius: 8px;
-  padding: 10px 20px;
+  border-radius: 999px;
+  padding: 11px 22px;
   background: var(--fg);
   color: var(--bg);
   font-size: 14px;
@@ -717,7 +716,7 @@ mark.active {
 .drop-zone {
   padding: 52px 32px 40px;
   border: 1.5px dashed var(--faint);
-  border-radius: 18px;
+  border-radius: 28px;
 }
 
 .drop-zone h1 {
@@ -751,7 +750,7 @@ mark.active {
   margin-top: 12px;
   padding: 12px 16px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 999px;
   background: var(--surface);
   font-size: 14px;
   text-align: left;
@@ -800,6 +799,7 @@ mark.active {
 }
 
 /* ── 내 서재 ──────────────────────────────── */
+/* 큰 제목, 둥근 버튼·칩, 색 무대 위에 올린 표지, 이어 읽기 카드 */
 
 .page-scroll {
   position: absolute;
@@ -820,32 +820,156 @@ mark.active {
 
 .page-head {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
 
-.page-head h1,
-.work-info h1 {
+/* 보기 설정 패널 제목(.panel-head)과 같은 크기 */
+.page-head h1 {
   margin: 0;
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.04em;
 }
 
-.page-head p,
-.work-info p {
+.page-head p {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
 }
 
-.primary.with-icon {
+/* 둥근 아이콘 버튼 (담기, 편집) */
+.round-btn {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+  transition: transform 0.12s, background-color 0.12s;
+}
+
+.round-btn:hover {
+  transform: scale(1.04);
+}
+
+.round-btn.dark {
+  border-color: transparent;
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* 알약 버튼 */
+.pill {
+  flex: none;
+  padding: 9px 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.12s, background-color 0.12s;
+}
+
+.pill:hover {
+  background: var(--soft);
+}
+
+.pill.dark {
+  border-color: transparent;
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.pill.dark:hover {
+  opacity: 0.88;
+}
+
+.pill.small {
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: -4px 0;
+  padding: 4px 0;
+}
+
+.chip-btn {
+  flex: none;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+}
+
+.chip-btn:hover {
+  color: var(--fg);
+}
+
+.chip-btn.on {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sort-btn {
+  flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 16px 9px 12px;
+  gap: 4px;
+  padding: 8px 4px 8px 8px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.sort-btn:hover {
+  color: var(--fg);
+}
+
+/* 얇은 진행 막대 */
+.bar {
+  display: block;
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--hover);
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 0.3s;
 }
 
 .primary.small {
@@ -855,7 +979,7 @@ mark.active {
 
 .ghost {
   border: 0;
-  border-radius: 8px;
+  border-radius: 999px;
   padding: 10px 18px;
   background: var(--soft);
   font-size: 14px;
@@ -867,12 +991,26 @@ mark.active {
 }
 
 .lib-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
   padding: 48px 24px;
-  border-radius: 18px;
+  border-radius: 28px;
   background: var(--soft);
   text-align: center;
+}
+
+.lib-empty p {
+  margin: 0;
   font-size: 14px;
   line-height: 1.7;
+  color: var(--muted);
+}
+
+.lib-none {
+  margin: 8px 0;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -881,7 +1019,7 @@ mark.active {
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  border-radius: 18px;
+  border-radius: 22px;
   background: var(--soft);
 }
 
@@ -903,7 +1041,7 @@ mark.active {
   color: var(--muted);
 }
 
-.hint-body .primary {
+.hint-body .pill {
   margin-top: 10px;
 }
 
@@ -913,10 +1051,11 @@ mark.active {
   color: var(--fg);
 }
 
+/* 서재 격자: 색 무대 위에 표지를 띄운다 */
 .shelf {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 28px 20px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 28px 18px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -930,24 +1069,40 @@ mark.active {
   position: relative;
   display: block;
   width: 100%;
-  padding: 0;
+  padding: 0 18% 14px;
   border: 0;
   background: none;
   cursor: pointer;
-  transition: transform 0.15s;
 }
 
-.book-cover:hover {
-  transform: translateY(-2px);
+.book-stage {
+  position: absolute;
+  inset: 26% 0 0;
+  border-radius: 20px;
+  background: hsl(var(--h) 45% 92%);
+  transition: background-color 0.15s;
+}
+
+[data-theme='dark'] .book-stage {
+  background: hsl(var(--h) 14% 21%);
+}
+
+.book-cover .cover {
+  transition: transform 0.18s;
+}
+
+.book-cover:hover .cover {
+  transform: translateY(-4px);
 }
 
 .badge {
   position: absolute;
-  top: 8px;
+  top: 30%;
   right: 8px;
+  z-index: 1;
   padding: 3px 8px;
   border-radius: 999px;
-  background: rgba(24, 24, 27, 0.72);
+  background: rgba(24, 24, 27, 0.78);
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -957,7 +1112,7 @@ mark.active {
   display: flex;
   align-items: flex-start;
   gap: 4px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .book-text {
@@ -966,11 +1121,30 @@ mark.active {
 }
 
 .book-title {
+  display: flex;
+  align-items: center;
+  gap: 3px;
   font-size: 14px;
   font-weight: 600;
+}
+
+.book-title > span:last-child {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 최근에 읽은 작품: 제목 앞의 작품 색 점 */
+.recent-dot {
+  flex: none;
+  display: inline-flex;
+  margin-left: -2px;
+  color: hsl(var(--h) 60% 50%);
+}
+
+[data-theme='dark'] .recent-dot {
+  color: hsl(var(--h) 60% 65%);
 }
 
 .book-sub {
@@ -983,19 +1157,25 @@ mark.active {
   margin: -4px -6px 0 0;
 }
 
-/* 표지: 이미지가 없으면 제목 색상값(--h)으로 은은한 그라데이션을 그린다 */
+.book > .bar {
+  height: 3px;
+  margin-top: 8px;
+}
+
+/* 표지: 이미지가 없으면 제목 색상값(--h)으로 책 표지를 그린다 */
 .cover {
   position: relative;
+  z-index: 1;
   aspect-ratio: 3 / 4;
   display: flex;
   align-items: flex-end;
-  padding: 14px 14px 16px 18px;
+  padding: 14px 12px 14px 16px;
   overflow: hidden;
-  border-radius: 6px 12px 12px 6px;
-  background: linear-gradient(160deg, hsl(var(--h) 40% 91%), hsl(calc(var(--h) + 28) 34% 80%));
+  border-radius: 4px 10px 10px 4px;
+  background: linear-gradient(160deg, hsl(var(--h) 38% 68%), hsl(calc(var(--h) + 28) 40% 54%));
   background-size: cover;
   background-position: center;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 12px 22px -8px hsl(var(--h) 30% 25% / 0.45), 0 1px 2px rgba(0, 0, 0, 0.08);
   text-align: left;
 }
 
@@ -1004,8 +1184,8 @@ mark.active {
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
-  width: 6px;
-  background: rgba(0, 0, 0, 0.07);
+  width: 5px;
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .cover-title {
@@ -1013,61 +1193,84 @@ mark.active {
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  color: hsl(var(--h) 30% 24%);
-  font-size: 15px;
+  color: #fff;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.3;
   letter-spacing: -0.03em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
 
 .cover.sm {
-  padding: 10px 10px 12px 14px;
+  padding: 10px 8px 10px 12px;
 }
 
 .cover.sm .cover-title {
   font-size: 12px;
 }
 
-[data-theme='dark'] .cover:not(.image) {
-  filter: brightness(0.88);
-}
-
 /* ── 작품 ─────────────────────────────────── */
 
-.work-head {
+.work-hero {
+  position: relative;
   display: flex;
-  align-items: flex-end;
-  gap: 20px;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 0;
 }
 
 .work-cover {
-  width: 112px;
+  width: 64px;
   flex: none;
 }
 
 .work-info {
   flex: 1;
   min-width: 0;
+  padding-right: 46px;
 }
 
 .work-info h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1.2;
   overflow-wrap: anywhere;
 }
 
-.work-actions {
+.stats {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 16px;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
 }
 
-.work-actions .primary {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* 숫자를 크게 쓴 작은 말풍선 */
+.stat {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--soft);
+  font-size: 11px;
+  color: var(--muted);
   white-space: nowrap;
+}
+
+.stat b {
+  margin-right: 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.hero-edit {
+  position: absolute;
+  top: 4px;
+  right: 0;
+  width: 34px;
+  height: 34px;
 }
 
 .text-input {
@@ -1075,7 +1278,7 @@ mark.active {
   height: 40px;
   padding: 0 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--surface);
   font-size: 14px;
   outline: none;
@@ -1086,9 +1289,9 @@ mark.active {
 }
 
 .title-input {
-  height: 44px;
-  font-size: 20px;
-  font-weight: 700;
+  height: 36px;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .row.action {
@@ -1105,119 +1308,180 @@ mark.active {
   color: #c4553a;
 }
 
-.episodes {
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.section-head h3 {
   margin: 0;
+}
+
+.pill.with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.section h3 .count {
+  margin-left: 4px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* 편 목록 타임라인: 편마다 상태 점을 세로선으로 잇는다 */
+/* 줄 배경(강조·hover)이 글자에 붙지 않도록, 목록을 양옆으로 12px 넓히고 같은 만큼 안쪽 여백을 준다.
+   글자와 아이콘은 위의 "목록" 제목과 같은 선에 그대로 놓인다. */
+.timeline {
+  position: relative;
+  margin: 0 -12px;
+  padding: 0;
   list-style: none;
 }
 
-.ep {
+.tl-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 16px;
+  transition: background-color 0.12s;
+}
+
+.tl-item:not(.next):hover {
+  background: var(--soft);
+}
+
+/* 작품 화면의 버튼은 작품 색을 쓴다: 목록 위 이어 읽기는 연한 작품 색 바탕에 진한 작품 색 글자,
+   다음에 읽을 편의 버튼은 작품 색 바탕에 흰 글자 */
+.work-cta {
+  border-color: hsl(var(--h) 35% 86%);
+  background: hsl(var(--h) 50% 96%);
+  color: hsl(var(--h) 40% 34%);
+}
+
+.work-cta:hover {
+  background: hsl(var(--h) 50% 92%);
+}
+
+[data-theme='dark'] .work-cta {
+  border-color: hsl(var(--h) 15% 30%);
+  background: hsl(var(--h) 18% 18%);
+  color: hsl(var(--h) 45% 74%);
+}
+
+[data-theme='dark'] .work-cta:hover {
+  background: hsl(var(--h) 18% 23%);
+}
+
+/* 지금 읽는(다음에 읽을) 편: 작품 색으로 은은하게 물들인다 */
+.tl-item.next {
+  background: hsl(var(--h) 50% 95%);
+}
+
+[data-theme='dark'] .tl-item.next {
+  background: hsl(var(--h) 18% 19%);
+}
+
+/* 점 사이를 잇는 선 */
+.tl-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: calc(50% + 11px);
+  left: 20.25px;
+  height: calc(100% - 22px);
+  border-left: 1.5px dashed var(--faint);
+}
+
+.tl-item.done:not(:last-child)::after {
+  border-left-style: solid;
+  border-color: hsl(var(--h) 35% 65%);
+}
+
+/* 상태 아이콘: 읽기 전은 흐리게, 읽는 중·다 읽음·다음 편은 진하게 */
+.tl-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--faint);
+}
+
+.tl-item.reading .tl-icon,
+.tl-item.done .tl-icon,
+.tl-item.next .tl-icon {
+  color: hsl(var(--h) 40% 40%);
+}
+
+/* 작품 화면의 진행 막대는 작품 색. 표지가 연한 색이라 같은 색을 더 진하게 쓴다. */
+.tl-body .bar {
+  background: hsl(var(--h) 30% 91%);
+}
+
+.tl-body .bar > span {
+  background: hsl(var(--h) 40% 45%);
+}
+
+[data-theme='dark'] .tl-item.reading .tl-icon,
+[data-theme='dark'] .tl-item.done .tl-icon,
+[data-theme='dark'] .tl-item.next .tl-icon {
+  color: hsl(var(--h) 45% 72%);
+}
+
+[data-theme='dark'] .tl-body .bar {
+  background: hsl(var(--h) 12% 26%);
+}
+
+[data-theme='dark'] .tl-body .bar > span {
+  background: hsl(var(--h) 45% 68%);
+}
+
+.tl-body {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 12px;
-  align-self: stretch;
-  padding: 0;
+  min-height: 48px;
+  padding: 8px 12px;
+  color: inherit;
+  font: inherit;
   border: 0;
   background: none;
-  font-size: 14px;
   text-align: left;
   cursor: pointer;
 }
 
-.episodes .row {
-  padding: 10px 0;
-}
-
-/* 편 썸네일: 작품 표지와 같은 색의 작은 책에 편 번호를 쓴다 */
-.ep-thumb {
-  position: relative;
-  width: 40px;
-  height: 52px;
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 3px 7px 7px 3px;
-  background: linear-gradient(160deg, hsl(var(--h) 40% 91%), hsl(calc(var(--h) + 28) 34% 80%));
-  color: hsl(var(--h) 30% 24%);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-  line-height: 1;
-}
-
-.ep-thumb::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: rgba(0, 0, 0, 0.07);
-}
-
-.ep-thumb b {
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-
-.ep-thumb small {
-  margin-top: 2px;
-  font-size: 10px;
-  opacity: 0.75;
-}
-
-[data-theme='dark'] .ep-thumb {
-  filter: brightness(0.88);
-}
-
-.ep-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ep-title {
+.tl-title {
+  flex: 0 1 auto;
+  max-width: 45%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.ep-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+.tl-body .bar {
+  flex: 1;
+  min-width: 40px;
+  height: 3px;
 }
 
-.ep-state {
+.tl-state {
+  flex: none;
+  min-width: 40px;
+  text-align: right;
   font-size: 12px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
-}
-
-.ep-progress .bar {
-  display: block;
-  width: 100%;
-  max-width: 220px;
-  height: 3px;
-  overflow: hidden;
-  border-radius: 2px;
-  background: var(--hover);
-}
-
-.ep-progress .bar span {
-  display: block;
-  height: 100%;
-  border-radius: 2px;
-  background: var(--accent);
-  transition: width 0.3s;
-}
-
-.episodes .row > .icon-btn {
-  margin-left: 6px;
 }
 
 /* ── 본문 끝의 다음 편 ────────────────────── */
@@ -1343,26 +1607,33 @@ select.text-input {
 
 @media (max-width: 640px) {
   .page {
-    padding: 24px 16px 48px;
+    padding: 24px 20px 48px;
     gap: 20px;
   }
 
   .shelf {
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px 12px;
+    gap: 22px 10px;
+  }
+
+  .book-cover {
+    padding: 0 14% 10px;
+  }
+
+  .book-stage {
+    border-radius: 16px;
   }
 
   .shelf .cover {
-    padding: 10px 8px 12px 13px;
+    padding: 8px 6px 8px 10px;
   }
 
   .shelf .cover-title {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .badge {
-    top: 6px;
-    right: 6px;
+    right: 5px;
     padding: 2px 6px;
     font-size: 10px;
   }
@@ -1379,8 +1650,13 @@ select.text-input {
     font-size: 11px;
   }
 
+
   .work-cover {
-    width: 92px;
+    width: 56px;
+  }
+
+  .work-info h1 {
+    font-size: 17px;
   }
 }
 
