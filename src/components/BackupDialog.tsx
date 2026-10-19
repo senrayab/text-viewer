@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { PRIVACY_URL } from '../config'
 import { createBackup, restoreBackup, type BackupSummary } from '../lib/backup'
 import {
@@ -112,11 +112,18 @@ export function BackupDialog({ onClose, onRestored }: BackupDialogProps) {
     })
   }
 
-  let status = '연결 전'
+  // 백업이 있으면 날짜와 용량을 한 줄씩 보여준다
+  let status: ReactNode = '연결 전'
   if (signedIn) {
     if (backup === undefined) status = '확인 중…'
     else if (backup === null) status = '아직 없어요'
-    else status = `${formatDate(backup.modifiedTime)} · ${formatBytes(backup.size)}`
+    else
+      status = (
+        <>
+          <span>{formatDate(backup.modifiedTime)}</span>
+          <span>{formatBytes(backup.size)}</span>
+        </>
+      )
   }
 
   return (
