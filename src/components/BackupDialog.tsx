@@ -153,12 +153,14 @@ export function BackupDialog({ onClose, onRestored, autoAuth }: BackupDialogProp
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
       <div className="modal" role="dialog" aria-label="구글 드라이브 백업">
-        <button className="icon-btn modal-close" onClick={onClose} title="닫기" disabled={!!busy}>
-          <CloseIcon />
-        </button>
-        <header className="panel-head">
-          <h2>구글 드라이브 백업</h2>
-          <p>서재를 내 구글 드라이브에 보관하고, 다른 기기에서 불러올 수 있어요.</p>
+        <header className="sheet-head">
+          <div>
+            <span className="eyebrow">GOOGLE DRIVE</span>
+            <p>서재를 내 구글 드라이브에 보관하고, 다른 기기에서 불러올 수 있어요.</p>
+          </div>
+          <button className="round-btn sheet-close" onClick={onClose} title="닫기" disabled={!!busy}>
+            <CloseIcon />
+          </button>
         </header>
 
         {!driveConfigured ? (

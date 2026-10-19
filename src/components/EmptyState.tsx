@@ -1,4 +1,4 @@
-import { RecentIcon } from './Icons'
+import { FileIcon, OpenIcon, RecentIcon } from './Icons'
 
 const SHORTCUTS: [string, string][] = [
   ['Ctrl O', '파일 열기'],
@@ -18,18 +18,23 @@ interface EmptyStateProps {
   error: string | null
 }
 
+/** 처음 화면 — 파일을 끌어다 놓는 점선 영역을 화면 가운데(조금 위)에 둔다 */
 export function EmptyState({ onOpen, recentName, onOpenRecent, error }: EmptyStateProps) {
   return (
     <div className="empty">
-      <div className="empty-inner">
+      <div className="home">
         <div className="drop-zone">
-          <h1>텍스트 파일을 열어보세요</h1>
-          <p>.txt 파일을 이곳에 끌어다 놓거나</p>
-          <button className="primary" onClick={onOpen}>
+          <span className="drop-icon">
+            <FileIcon />
+          </span>
+          <strong>여기에 파일을 끌어다 놓거나</strong>
+          <p>.txt 파일을 고르면 바로 열려요</p>
+          <button className="primary with-icon" onClick={onOpen}>
+            <OpenIcon />
             파일 선택
           </button>
-          {error && <p className="error">{error}</p>}
         </div>
+
         {recentName && (
           <button className="recent-btn" onClick={onOpenRecent}>
             <RecentIcon />
@@ -37,6 +42,9 @@ export function EmptyState({ onOpen, recentName, onOpenRecent, error }: EmptySta
             <span className="recent-name">{recentName}</span>
           </button>
         )}
+
+        {error && <p className="error">{error}</p>}
+
         <dl className="shortcuts">
           {SHORTCUTS.map(([key, label]) => (
             <div key={key}>
@@ -47,6 +55,8 @@ export function EmptyState({ onOpen, recentName, onOpenRecent, error }: EmptySta
             </div>
           ))}
         </dl>
+
+        <p className="page-foot">파일은 이 기기 안에서만 열려요.</p>
       </div>
     </div>
   )

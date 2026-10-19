@@ -1,5 +1,5 @@
 import { useMemo, useState, type CSSProperties } from 'react'
-import { episodeKey, episodeStatus, lastReadAt, workProgress, type WorkSummary } from '../lib/library'
+import { lastReadAt, workProgress, type WorkSummary } from '../lib/library'
 import type { Position } from '../lib/storage'
 import { Cover, workHue } from './Cover'
 import { MoreIcon, PlusIcon, RecentDotIcon } from './Icons'
@@ -52,6 +52,12 @@ export function Library({ items, positions, onOpen, onDetail, onAdd }: LibraryPr
     <>
       <div className="page-scroll">
         <div className="page library">
+          <header className="page-head">
+            <span className="eyebrow">LIBRARY</span>
+            <h1 className="display">내 서재</h1>
+            <p>{items.length ? `${items.length}개의 작품` : '아직 담은 작품이 없어요'}</p>
+          </header>
+
           <InstallHint />
 
           {items.length === 0 ? (
@@ -67,13 +73,13 @@ export function Library({ items, positions, onOpen, onDetail, onAdd }: LibraryPr
             </div>
           ) : (
             <>
-              <div className="chips" role="tablist">
+              <div className="tabs" role="tablist">
                 {FILTERS.map((f) => (
                   <button
                     key={f.value}
                     role="tab"
                     aria-selected={filter === f.value}
-                    className={`chip-btn${filter === f.value ? ' on' : ''}`}
+                    className={`tab${filter === f.value ? ' on' : ''}`}
                     onClick={() => setFilter(f.value)}
                   >
                     {f.label}
@@ -87,10 +93,7 @@ export function Library({ items, positions, onOpen, onDetail, onAdd }: LibraryPr
                 <ul className="shelf">
                   {visible.map(({ summary: s, progress }) => {
                     const count = s.episodes.length
-                    const sub =
-                      count > 1
-                        ? `${count}편 · ${progress.done ? '다 읽음' : progress.started ? `${progress.percent}%` : '읽기 전'}`
-                        : episodeStatus(positions[episodeKey(s.episodes[0])]).label
+                    const percent = progress.done ? 100 : progress.percent
                     return (
                       <li key={s.work.id} className="book" style={{ '--h': workHue(s.work) } as CSSProperties}>
                         <button className="book-cover" onClick={() => onOpen(s)} aria-label={`${s.work.title} 열기`}>
@@ -108,17 +111,22 @@ export function Library({ items, positions, onOpen, onDetail, onAdd }: LibraryPr
                               )}
                               <span>{s.work.title}</span>
                             </div>
-                            <div className="book-sub">{sub}</div>
+                            {/* 편수는 표지의 배지에 있으니, 여기는 읽은 정도만 한 줄로 */}
+                            {progress.started ? (
+                              <div className="book-progress">
+                                <span className="bar">
+                                  <span style={{ width: `${percent}%` }} />
+                                </span>
+                                <span className="book-pct">{percent}%</span>
+                              </div>
+                            ) : (
+                              <div className="book-sub">읽기 전</div>
+                            )}
                           </div>
                           <button className="icon-btn small" onClick={() => onDetail(s)} title="작품 정보">
                             <MoreIcon />
                           </button>
                         </div>
-                        {progress.started && (
-                          <span className="bar">
-                            <span style={{ width: `${progress.done ? 100 : progress.percent}%` }} />
-                          </span>
-                        )}
                       </li>
                     )
                   })}

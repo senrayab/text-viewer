@@ -6,6 +6,8 @@
   --ui-md: 13px;
   --ui-lg: 15px;
   --ui-xl: 17px;
+  /* 진행 막대 두께 (서재·작품 화면 공통) */
+  --bar-h: 3px;
   /* Tossface는 반드시 본문 글꼴 뒤에 둔다 — 앞에 두면 Chrome이 숫자까지 Tossface로 그린다 */
   --ui-font: 'Pretendard Variable', Pretendard, Tossface, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
@@ -25,61 +27,83 @@
   --ui-xl: 18px;
 }
 
+/* 바탕은 차분한 회색, 카드는 흰색. 주요 버튼은 짙은 청록(ink), 머리말은 주황(brand). */
 :root,
 [data-theme='light'] {
-  --bg: #fbfbf9;
-  --fg: #2a2a28;
-  --muted: #8b8b86;
-  --faint: #cfcfca;
-  --border: #ececea;
+  --bg: #f3f4f6;
+  --fg: #1f2328;
+  --muted: #7d848d;
+  --faint: #b9bfc6;
+  --border: #e5e7eb;
   --surface: #ffffff;
-  --soft: #f5f5f3;
-  --hover: rgba(0, 0, 0, 0.05);
-  --track: rgba(0, 0, 0, 0.1);
-  --accent: #2a2a28;
+  --soft: #eceef1;
+  --hover: rgba(15, 23, 42, 0.05);
+  --track: rgba(15, 23, 42, 0.1);
+  --accent: #0f2a30;
+  --ink: #0f2a30;
+  --on-ink: #ffffff;
+  --brand: #d9733b;
+  --brand-tint: rgba(217, 115, 59, 0.09);
+  --title: #7d848d;
+  --ink-mid: #50565e;
   --mark: rgba(255, 200, 0, 0.35);
   --mark-active: rgba(255, 140, 0, 0.6);
-  --selection: rgba(42, 42, 40, 0.14);
-  --overlay: rgba(251, 251, 249, 0.9);
-  --shadow: 0 10px 32px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --selection: rgba(15, 42, 48, 0.15);
+  --overlay: rgba(243, 244, 246, 0.9);
+  --shadow: 0 16px 40px rgba(16, 24, 40, 0.1), 0 2px 6px rgba(16, 24, 40, 0.05);
+  --raise: 0 4px 14px rgba(16, 24, 40, 0.06);
   color-scheme: light;
 }
 
 [data-theme='sepia'] {
-  --bg: #f5eddb;
-  --fg: #4f3f2e;
-  --muted: #9a8a70;
-  --faint: #d3c5a6;
-  --border: #e7dcc2;
-  --surface: #fbf5e8;
-  --soft: #f3ead6;
+  --bg: #f3ecdc;
+  --fg: #3f3226;
+  --muted: #8d7d63;
+  --faint: #c9b994;
+  --border: #e6dbc1;
+  --surface: #fbf6ea;
+  --soft: #ede3cc;
   --hover: rgba(90, 64, 20, 0.07);
   --track: rgba(90, 64, 20, 0.14);
-  --accent: #4f3f2e;
+  --accent: #3b2e20;
+  --ink: #3b2e20;
+  --on-ink: #fbf6ea;
+  --brand: #c0622a;
+  --brand-tint: rgba(192, 98, 42, 0.1);
+  --title: #8d7d63;
+  --ink-mid: #5e4c38;
   --mark: rgba(230, 170, 40, 0.35);
   --mark-active: rgba(215, 115, 20, 0.55);
   --selection: rgba(79, 63, 46, 0.16);
-  --overlay: rgba(245, 237, 219, 0.9);
-  --shadow: 0 10px 32px rgba(80, 60, 20, 0.1), 0 1px 3px rgba(80, 60, 20, 0.08);
+  --overlay: rgba(243, 236, 220, 0.9);
+  --shadow: 0 16px 40px rgba(80, 60, 20, 0.12), 0 2px 6px rgba(80, 60, 20, 0.06);
+  --raise: 0 4px 14px rgba(80, 60, 20, 0.08);
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --bg: #161616;
-  --fg: #d4d4d0;
-  --muted: #7c7c78;
-  --faint: #45453f;
-  --border: #262626;
-  --surface: #1f1f1f;
-  --soft: #272727;
+  --bg: #111315;
+  --fg: #e4e6e8;
+  --muted: #8b929a;
+  --faint: #4a4f55;
+  --border: #24282c;
+  --surface: #1b1e21;
+  --soft: #23272b;
   --hover: rgba(255, 255, 255, 0.06);
   --track: rgba(255, 255, 255, 0.13);
-  --accent: #e4e4e0;
+  --accent: #cfe0e3;
+  --ink: #e4e6e8;
+  --on-ink: #111315;
+  --brand: #e8915c;
+  --brand-tint: rgba(232, 145, 92, 0.13);
+  --title: #9aa1a8;
+  --ink-mid: #b9bec4;
   --mark: rgba(255, 200, 0, 0.22);
   --mark-active: rgba(255, 160, 0, 0.55);
   --selection: rgba(255, 255, 255, 0.18);
-  --overlay: rgba(22, 22, 22, 0.9);
-  --shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --overlay: rgba(17, 19, 21, 0.9);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --raise: 0 4px 14px rgba(0, 0, 0, 0.35);
   color-scheme: dark;
 }
 
@@ -138,18 +162,22 @@ kbd {
 }
 
 .toolbar {
-  height: 52px;
+  height: 64px;
   flex: none;
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 0 12px 0 20px;
-  border-bottom: 1px solid var(--border);
+  gap: 6px;
+  padding: 0 16px 0 20px;
 }
 
 .toolbar .back {
-  margin-left: -10px;
-  margin-right: 2px;
+  margin-left: -4px;
+}
+
+/* 넓은 화면에서는 머리를 가운데 칸에 맞춘다 */
+.toolbar {
+  padding-left: max(20px, calc((100% - 880px) / 2 + 24px));
+  padding-right: max(16px, calc((100% - 880px) / 2 + 24px));
 }
 
 .title {
@@ -168,7 +196,15 @@ kbd {
 }
 
 .title .brand {
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.title .brand svg {
+  flex: none;
+  color: var(--brand);
 }
 
 .main {
@@ -241,9 +277,12 @@ kbd {
   transition: background-color 0.12s, color 0.12s;
 }
 
-.icon-btn:hover:not(:disabled) {
-  background: var(--hover);
-  color: var(--fg);
+/* 터치 기기에서는 누른 뒤에도 hover가 남아 버튼이 회색으로 보이므로, 마우스가 있을 때만 쓴다 */
+@media (hover: hover) {
+  .icon-btn:not(.round):hover:not(:disabled) {
+    background: var(--hover);
+    color: var(--fg);
+  }
 }
 
 .icon-btn.on {
@@ -261,12 +300,36 @@ kbd {
   height: 28px;
 }
 
+/* 머리의 둥근 흰 버튼 — 모든 화면에서 같은 크기 */
+.icon-btn.round {
+  width: 36px;
+  height: 36px;
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--raise);
+}
+
+/* 눌린(켜진) 버튼. 터치 기기에서는 누른 뒤에도 hover가 남아서, hover가 이 모양을 덮지 않게 한다 */
+.icon-btn.round.on,
+.icon-btn.round.on:hover {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+@media (hover: hover) {
+  .icon-btn.round:not(.on):hover:not(:disabled) {
+    background: var(--surface);
+    color: var(--fg);
+    transform: scale(1.04);
+  }
+}
+
 .primary {
   border: 0;
   border-radius: 999px;
   padding: 11px 22px;
-  background: var(--fg);
-  color: var(--bg);
+  background: var(--ink);
+  color: var(--on-ink);
   font-size: var(--ui-md);
   font-weight: 500;
   cursor: pointer;
@@ -445,38 +508,91 @@ mark.active {
 /* 큰 제목, 미리보기 카드, 타일, 묶음 카드로 구성한 부드러운 카드형 레이아웃 */
 
 .panel {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  z-index: 20;
-  width: 340px;
-  max-height: calc(100% - 16px);
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  width: 100%;
+  max-width: 520px;
+  max-height: 86vh;
+  margin: 0 auto;
   overflow: auto;
   display: flex;
   flex-direction: column;
   gap: 22px;
-  padding: 24px 20px 20px;
+  padding: 22px 20px calc(28px + env(safe-area-inset-bottom));
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 22px;
+  border-radius: 26px 26px 0 0;
   box-shadow: var(--shadow);
   font-size: var(--ui-md);
   scrollbar-width: thin;
   scrollbar-color: var(--faint) transparent;
-  animation: pop 0.14s ease-out;
+  animation: sheet-up 0.22s ease-out;
 }
 
-.panel-head h2 {
-  margin: 0;
-  font-size: var(--ui-xl);
-  font-weight: 700;
-  letter-spacing: -0.04em;
+/* ⋯ 메뉴 버튼은 휴대폰 읽기 화면에서만 보인다 */
+.more-btn {
+  display: none;
 }
 
-.panel-head p {
-  margin: 4px 0 0;
+.menu-sheet {
+  gap: 16px;
+}
+
+.menu-sheet .sheet-head {
+  align-items: center;
+}
+
+.menu-sheet .row kbd {
+  margin-left: auto;
+}
+
+/* 터치 기기에는 키보드가 없으니 단축키 안내를 숨긴다 */
+@media (hover: none) {
+  .menu-sheet .row kbd {
+    display: none;
+  }
+}
+
+/* 시트 뒤를 어둡게 덮는다 */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background: rgba(15, 23, 42, 0.35);
+  animation: fade 0.18s ease-out;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+/* 시트·대화상자 머리: 주황 머리말 + 설명, 오른쪽 둥근 닫기 */
+.sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sheet-head p {
+  margin: 8px 0 0;
   font-size: var(--ui-sm);
+  line-height: 1.5;
   color: var(--muted);
+}
+
+.round-btn.sheet-close {
+  width: 36px;
+  height: 36px;
+  margin: -4px -4px 0 0;
+  border: 0;
+  background: var(--soft);
+  box-shadow: none;
 }
 
 .preview {
@@ -485,7 +601,7 @@ mark.active {
   background: var(--soft);
 }
 
-.preview .eyebrow {
+.preview .preview-label {
   font-size: var(--ui-xs);
   color: var(--muted);
 }
@@ -617,6 +733,7 @@ mark.active {
   padding: 2px 14px;
   border: 1px solid var(--border);
   border-radius: 18px;
+  background: var(--surface);
 }
 
 .row {
@@ -723,64 +840,79 @@ mark.active {
 
 /* ── 빈 화면 ──────────────────────────────── */
 
+/* 남는 높이의 가운데에 둔다. 위에 머리(64px)가 있어서 아래 여백을 더 줘서 화면 전체 기준으로 조금 위로 올린다 */
 .empty {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  /* 위 툴바(52px)만큼 아래 여백을 더 줘서 화면 전체 기준으로 가운데에 보이게 한다 */
-  padding: 24px 24px 76px;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 20px 112px;
   overflow: auto;
 }
 
-.empty-inner {
+.home {
   width: 100%;
   max-width: 440px;
+  /* 위아래 auto: 높이가 남으면 가운데, 모자라면 위에서부터 (잘리지 않음) */
+  margin: auto;
+}
+
+.home .error {
+  margin: 16px 0 0;
+  color: #c4553a;
+  font-size: var(--ui-sm);
+}
+
+/* 파일을 끌어다 놓는 점선 영역 — 흰 바탕에 점선 테두리 */
+.drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 36px 24px 28px;
+  border: 1.5px dashed var(--faint);
+  border-radius: 22px;
+  background: var(--surface);
   text-align: center;
 }
 
-.drop-zone {
-  padding: 52px 32px 40px;
-  border: 1.5px dashed var(--faint);
-  border-radius: 28px;
+.drop-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: var(--brand-tint);
+  color: var(--brand);
 }
 
-.drop-zone h1 {
-  margin: 0 0 8px;
-  font-size: var(--ui-xl);
-  font-weight: 600;
-  letter-spacing: -0.035em;
+.drop-zone strong {
+  font-size: var(--ui-lg);
+  font-weight: 700;
 }
 
 .drop-zone p {
-  margin: 0 0 20px;
-  font-size: var(--ui-md);
+  margin: 0 0 14px;
+  font-size: var(--ui-sm);
   color: var(--muted);
 }
 
-.drop-zone .error {
-  margin: 12px 0 0;
-  color: #d9534f;
-}
-
 .recent-btn {
-  width: 100%;
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
   margin-top: 12px;
-  padding: 12px 16px;
-  border: 1px solid var(--border);
+  padding: 13px 18px;
+  border: 0;
   border-radius: 999px;
   background: var(--surface);
+  box-shadow: var(--raise);
   font-size: var(--ui-md);
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.12s;
-}
-
-.recent-btn:hover {
-  background: var(--hover);
 }
 
 .recent-btn svg {
@@ -795,16 +927,17 @@ mark.active {
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: right;
-  color: var(--muted);
   font-size: var(--ui-sm);
+  font-weight: 400;
+  color: var(--muted);
 }
 
 .shortcuts {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px 24px;
-  margin: 32px 0 0;
-  padding: 0 12px;
+  margin: 28px 0 0;
+  padding: 0 4px;
   font-size: var(--ui-xs);
   color: var(--muted);
 }
@@ -839,25 +972,38 @@ mark.active {
   gap: 24px;
 }
 
-.page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-/* 보기 설정 패널 제목(.panel-head)과 같은 크기 */
-.page-head h1 {
-  margin: 0;
-  font-size: var(--ui-xl);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-}
-
 .page-head p {
-  margin: 4px 0 0;
+  margin: 8px 0 0;
   font-size: var(--ui-sm);
   color: var(--muted);
+}
+
+/* 주황 대문자 머리말 */
+.eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--brand);
+  text-transform: uppercase;
+}
+
+/* 크고 가벼운 회색 제목 */
+.display {
+  margin: 8px 0 0;
+  font-size: 30px;
+  font-weight: 300;
+  line-height: 1.28;
+  letter-spacing: -0.03em;
+  color: var(--title);
+}
+
+/* 화면 맨 아래의 작은 안내 */
+.page-foot {
+  margin: 28px 0 0;
+  font-size: var(--ui-xs);
+  text-align: center;
+  color: var(--faint);
 }
 
 /* 둥근 아이콘 버튼 (담기, 편집) */
@@ -868,10 +1014,11 @@ mark.active {
   display: grid;
   place-items: center;
   padding: 0;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 50%;
   background: var(--surface);
   color: var(--fg);
+  box-shadow: var(--raise);
   cursor: pointer;
   transition: transform 0.12s, background-color 0.12s;
 }
@@ -883,12 +1030,13 @@ mark.active {
 /* 화면 오른쪽 아래에 떠 있는 버튼 */
 .fab {
   position: absolute;
-  right: 20px;
+  /* 넓은 화면에서는 서재 칸의 오른쪽 끝에 맞춘다 */
+  right: max(20px, calc((100% - 880px) / 2 + 24px));
   bottom: calc(24px + env(safe-area-inset-bottom));
   z-index: 15;
   width: 56px;
   height: 56px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 14px 28px -8px rgba(11, 34, 40, 0.45);
 }
 
 /* 떠 있는 버튼에 마지막 줄이 가리지 않도록 */
@@ -897,9 +1045,8 @@ mark.active {
 }
 
 .round-btn.dark {
-  border-color: transparent;
-  background: var(--fg);
-  color: var(--bg);
+  background: var(--ink);
+  color: var(--on-ink);
 }
 
 /* 알약 버튼 */
@@ -923,8 +1070,8 @@ mark.active {
 
 .pill.dark {
   border-color: transparent;
-  background: var(--fg);
-  color: var(--bg);
+  background: var(--ink);
+  color: var(--on-ink);
 }
 
 .pill.dark:hover {
@@ -936,35 +1083,44 @@ mark.active {
   font-size: var(--ui-xs);
 }
 
-.chips {
+.tabs {
   display: flex;
-  gap: 8px;
+  gap: 22px;
   overflow-x: auto;
   scrollbar-width: none;
-  margin: -4px 0;
-  padding: 4px 0;
 }
 
-.chip-btn {
+.tab {
+  position: relative;
   flex: none;
-  padding: 8px 16px;
+  padding: 4px 0 14px;
   border: 0;
-  border-radius: 999px;
-  background: var(--soft);
-  color: var(--muted);
+  background: none;
+  color: var(--faint);
   font-size: var(--ui-sm);
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.12s, color 0.12s;
+  transition: color 0.12s;
 }
 
-.chip-btn:hover {
+.tab:hover {
+  color: var(--muted);
+}
+
+.tab.on {
   color: var(--fg);
 }
 
-.chip-btn.on {
-  background: var(--fg);
-  color: var(--bg);
+.tab.on::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--brand);
+  transform: translateX(-50%);
 }
 
 .section-title {
@@ -992,21 +1148,30 @@ mark.active {
 }
 
 /* 얇은 진행 막대 */
+/* 서재·작품의 진행 막대는 모두 같은 두께, 양 끝은 둥글게 */
 .bar {
   display: block;
   width: 100%;
-  height: 4px;
+  height: var(--bar-h);
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 999px;
   background: var(--track);
 }
 
 .bar > span {
   display: block;
   height: 100%;
-  border-radius: 2px;
+  border-radius: 999px;
   background: var(--accent);
   transition: width 0.3s;
+}
+
+.primary.with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 22px 11px 18px;
+  white-space: nowrap;
 }
 
 .primary.small {
@@ -1033,8 +1198,9 @@ mark.active {
   align-items: center;
   gap: 20px;
   padding: 48px 24px;
-  border-radius: 28px;
-  background: var(--soft);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--raise);
   text-align: center;
 }
 
@@ -1057,7 +1223,8 @@ mark.active {
   gap: 12px;
   padding: 16px;
   border-radius: 22px;
-  background: var(--soft);
+  background: var(--surface);
+  box-shadow: var(--raise);
 }
 
 .hint-body {
@@ -1172,16 +1339,12 @@ mark.active {
   white-space: nowrap;
 }
 
-/* 최근에 읽은 작품: 제목 앞의 작품 색 점 */
+/* 최근에 읽은 작품: 제목 앞의 주황 점 */
 .recent-dot {
   flex: none;
   display: inline-flex;
   margin-left: -2px;
-  color: hsl(var(--h) 60% 50%);
-}
-
-[data-theme='dark'] .recent-dot {
-  color: hsl(var(--h) 60% 65%);
+  color: var(--brand);
 }
 
 .book-sub {
@@ -1194,9 +1357,23 @@ mark.active {
   margin: -4px -6px 0 0;
 }
 
-.book > .bar {
-  height: 2px;
-  margin-top: 8px;
+.book-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.book-progress .bar {
+  flex: 1;
+}
+
+.book-pct {
+  flex: none;
+  font-size: var(--ui-2xs);
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* 표지: 이미지가 없으면 제목 색상값(--h)으로 책 표지를 그린다 */
@@ -1269,37 +1446,23 @@ mark.active {
   padding-right: 46px;
 }
 
-.work-info h1 {
-  margin: 0;
-  font-size: var(--ui-xl);
-  font-weight: 700;
-  letter-spacing: -0.045em;
-  line-height: 1.2;
+.work-info .display {
+  margin: 6px 0 0;
+  font-size: 24px;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
-.stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 8px;
+/* 작품 머리의 진행 막대와 한 줄 설명 */
+.work-progress {
+  max-width: 260px;
+  margin-top: 12px;
 }
 
-/* 숫자를 크게 쓴 작은 말풍선 */
-.stat {
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--soft);
+.work-meta {
+  margin: 8px 0 0;
   font-size: var(--ui-xs);
   color: var(--muted);
-  white-space: nowrap;
-}
-
-.stat b {
-  margin-right: 2px;
-  font-size: var(--ui-sm);
-  font-weight: 700;
-  color: var(--fg);
 }
 
 .hero-edit {
@@ -1355,7 +1518,16 @@ mark.active {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.section-label {
+  margin-right: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg);
 }
 
 .section-head h3 {
@@ -1377,122 +1549,93 @@ mark.active {
   color: var(--muted);
 }
 
-/* 편 목록 타임라인: 편마다 상태 점을 세로선으로 잇는다 */
-/* 줄 배경(강조·hover)이 글자에 붙지 않도록, 목록을 양옆으로 12px 넓히고 같은 만큼 안쪽 여백을 준다.
-   글자와 아이콘은 위의 "목록" 제목과 같은 선에 그대로 놓인다. */
+/* 편 목록: 카드 없이 가는 선으로 나눈 리스트 (레퍼런스의 받은 파일 목록) */
+/* 칸: 아이콘 | 편 이름 | 막대 | 상태(꼬리표·퍼센트) [| 편집 중 휴지통]
+   편 이름 칸은 가장 긴 이름에 맞추되 너무 길면 45%에서 자른다 */
 .timeline {
-  position: relative;
-  margin: 0 -12px;
+  display: grid;
+  grid-template-columns: 22px fit-content(45%) minmax(40px, 1fr) auto;
+  column-gap: 14px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.timeline.editing {
+  grid-template-columns: 22px fit-content(45%) minmax(40px, 1fr) auto auto;
+}
+
 .tl-item {
-  position: relative;
-  display: flex;
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: 4px;
-  border-radius: 16px;
-  transition: background-color 0.12s;
+  border-bottom: 1px solid var(--border);
 }
 
-.tl-item:not(.next):hover {
-  background: var(--soft);
+.tl-item:last-child {
+  border-bottom: 0;
 }
 
-/* 작품 화면의 버튼은 작품 색을 쓴다: 목록 위 이어 읽기는 연한 작품 색 바탕에 진한 작품 색 글자,
-   다음에 읽을 편의 버튼은 작품 색 바탕에 흰 글자 */
-.work-cta {
-  border-color: hsl(var(--h) 35% 86%);
-  background: hsl(var(--h) 50% 96%);
-  color: hsl(var(--h) 40% 34%);
-}
-
-.work-cta:hover {
-  background: hsl(var(--h) 50% 92%);
-}
-
-[data-theme='dark'] .work-cta {
-  border-color: hsl(var(--h) 15% 30%);
-  background: hsl(var(--h) 18% 18%);
-  color: hsl(var(--h) 45% 74%);
-}
-
-[data-theme='dark'] .work-cta:hover {
-  background: hsl(var(--h) 18% 23%);
-}
-
-/* 지금 읽는(다음에 읽을) 편: 작품 색으로 은은하게 물들인다 */
-.tl-item.next {
-  background: hsl(var(--h) 50% 95%);
-}
-
-[data-theme='dark'] .tl-item.next {
-  background: hsl(var(--h) 18% 19%);
-}
-
-/* 점 사이를 잇는 선 */
-.tl-item:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  top: calc(50% + 11px);
-  left: 20.25px;
-  height: calc(100% - 22px);
-  border-left: 1.5px dashed var(--faint);
-}
-
-.tl-item.done:not(:last-child)::after {
-  border-left-style: solid;
-  border-color: hsl(var(--h) 35% 65%);
-}
-
-/* 상태 아이콘: 읽기 전은 흐리게, 읽는 중·다 읽음·다음 편은 진하게 */
+/* 상태 아이콘: 읽기 전은 흐리게, 읽는 중·다 읽음은 진하게, 읽을 차례는 주황 */
 .tl-icon {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   flex: none;
   display: grid;
   place-items: center;
   color: var(--faint);
 }
 
+.tl-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.5;
+}
+
 .tl-item.reading .tl-icon,
-.tl-item.done .tl-icon,
+.tl-item.done .tl-icon {
+  color: var(--muted);
+}
+
 .tl-item.next .tl-icon {
-  color: hsl(var(--h) 40% 40%);
+  color: var(--brand);
 }
 
-/* 작품 화면의 진행 막대는 작품 색. 표지가 연한 색이라 같은 색을 더 진하게 쓴다. */
-.tl-body .bar {
-  background: hsl(var(--h) 28% 85%);
+/* 구간 탭 (1–50, 51–100 …) — 읽을 차례인 편이 있는 구간에는 작은 주황 점 */
+.range-tabs {
+  margin: -4px 0 4px;
 }
 
-.tl-body .bar > span {
-  background: hsl(var(--h) 40% 45%);
+.range-mark {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-left: 4px;
+  vertical-align: 3px;
+  border-radius: 50%;
+  background: var(--brand);
 }
 
-[data-theme='dark'] .tl-item.reading .tl-icon,
-[data-theme='dark'] .tl-item.done .tl-icon,
-[data-theme='dark'] .tl-item.next .tl-icon {
-  color: hsl(var(--h) 45% 72%);
-}
-
-[data-theme='dark'] .tl-body .bar {
-  background: hsl(var(--h) 12% 30%);
-}
-
-[data-theme='dark'] .tl-body .bar > span {
-  background: hsl(var(--h) 45% 68%);
+/* 읽을 차례인 편의 꼬리표 */
+.tl-badge {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--brand-tint);
+  color: var(--brand);
+  font-size: var(--ui-2xs);
+  font-weight: 600;
 }
 
 .tl-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
+  grid-column: 1 / 5;
+  display: grid;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  padding: 8px 12px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 14px 0;
   color: inherit;
   font: inherit;
   border: 0;
@@ -1502,26 +1645,36 @@ mark.active {
 }
 
 .tl-title {
-  flex: 0 1 auto;
-  max-width: 45%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--ui-md);
-  font-weight: 600;
+  font-size: var(--ui-sm);
+  color: var(--ink-mid);
 }
 
-.tl-body .bar {
-  flex: 1;
-  min-width: 40px;
-  height: 2px;
+.tl-item.next .tl-title {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+@media (hover: hover) {
+  .tl-body:hover .tl-title {
+    color: var(--fg);
+  }
 }
 
 .tl-state {
-  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
   min-width: 40px;
+  white-space: nowrap;
   text-align: right;
-  font-size: var(--ui-xs);
+  /* 작품 머리의 퍼센트(.book-pct)와 같은 크기 */
+  font-size: var(--ui-2xs);
+  font-weight: 600;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -1585,7 +1738,7 @@ mark.active {
   display: grid;
   place-items: center;
   padding: 16px;
-  background: rgba(0, 0, 0, 0.32);
+  background: rgba(15, 23, 42, 0.35);
   animation: fade 0.15s ease-out;
 }
 
@@ -1597,12 +1750,12 @@ mark.active {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 24px 20px 20px;
-  border-radius: 22px;
+  padding: 22px 20px 20px;
+  border-radius: 26px;
   background: var(--surface);
   box-shadow: var(--shadow);
   font-size: var(--ui-md);
-  animation: pop 0.16s ease-out;
+  animation: sheet-up 0.2s ease-out;
 }
 
 .groups {
@@ -1637,12 +1790,6 @@ select.text-input {
 
 .modal {
   position: relative;
-}
-
-.modal-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
 }
 
 .backup-note {
@@ -1879,13 +2026,32 @@ select.text-input {
     min-width: 0;
   }
 
-  .panel {
-    left: 12px;
-    right: 12px;
-    width: auto;
-  }
-
   .shortcuts {
     display: none;
+  }
+
+  .display {
+    font-size: 27px;
+  }
+
+  .modal-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .modal {
+    max-width: none;
+    max-height: 86vh;
+    border-radius: 26px 26px 0 0;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+
+  /* 휴대폰 읽기 화면: 제목 자리를 넓히려고 설정(Aa)과 ⋯만 남기고 나머지는 ⋯ 메뉴로 */
+  .toolbar.reading .reader-extra {
+    display: none;
+  }
+
+  .toolbar.reading .more-btn {
+    display: grid;
   }
 }

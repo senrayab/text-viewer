@@ -7,8 +7,10 @@ import { GotoBar } from './components/GotoBar'
 import {
   BackIcon,
   CloseIcon,
+  FileIcon,
   FocusIcon,
   LibraryIcon,
+  MoreIcon,
   NextIcon,
   OpenIcon,
   SaveIcon,
@@ -17,6 +19,7 @@ import {
   TypeIcon,
 } from './components/Icons'
 import { Library } from './components/Library'
+import { ReaderMenu, type ReaderMenuItem } from './components/ReaderMenu'
 import { SearchBar } from './components/SearchBar'
 import { SettingsPanel } from './components/SettingsPanel'
 import { Viewer, type MatchRange } from './components/Viewer'
@@ -40,6 +43,7 @@ import {
   type WorkSummary,
 } from './lib/library'
 import { findMatches } from './lib/search'
+import { HOME, historyDepth, parseRoute, pushRoute, replaceRoute, type Route, type View } from './lib/route'
 import {
   clearEntry,
   isSessionOpen,
@@ -66,19 +70,14 @@ interface Doc {
   episode?: Episode
 }
 
-/** 문서를 열지 않았을 때 보이는 화면. 문서를 닫으면 이 화면으로 돌아온다. */
-type View = { name: 'home' } | { name: 'library' } | { name: 'work'; workId: string }
-
-/** 새로고침 후 같은 화면으로 돌아오기 위해 탭에 기억해 두는 상태 */
+/** 새로고침 후 같은 상태로 돌아오기 위해 탭에 기억해 두는 것 (보던 화면은 주소에 있다) */
 interface SessionState {
-  view: View
   episodeId?: string
   /** 열려 있던 패널 — 개인정보처리방침에 다녀오거나 새로고침해도 그대로 다시 연다 */
   panel?: 'settings' | 'backup'
 }
 
 const ACCEPT = '.txt,.text,.log,text/plain'
-const HOME: View = { name: 'home' }
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings)
@@ -108,6 +107,8 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(() => loadSessionState<SessionState>()?.panel === 'settings')
   const [backupOpen, setBackupOpen] = useState(() => loadSessionState<SessionState>()?.panel === 'backup')
   const [backupAuth, setBackupAuth] = useState<Promise<string>>()
+  /** 휴대폰 읽기 화면의 ⋯ 메뉴 */
+  const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [gotoOpen, setGotoOpen] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
@@ -151,6 +152,8 @@ export default function App() {
       setGotoOpen(false)
       setProgress(0)
       setSessionOpen(true)
+      const route = parseRoute()
+      if (!route.reading) pushRoute({ ...route, reading: true })
     } catch {
       setError('파일을 읽을 수 없습니다.')
     }
@@ -175,7 +178,7 @@ export default function App() {
   // ── 내 서재 ───────────────────────────────────────────
   // 아래 effect가 곧바로 덮어쓰므로 새로고침 전 상태는 첫 렌더에서 한 번만 읽어 둔다
   const [initialSession] = useState(() => loadSessionState<SessionState>())
-  const [view, setView] = useState<View>(initialSession?.view ?? HOME)
+  const [view, setView] = useState<View>(() => parseRoute().view)
   const [library, setLibrary] = useState<WorkSummary[]>([])
   const [libraryLoaded, setLibraryLoaded] = useState(false)
   const [positions, setPositions] = useState(readPositions)
@@ -203,8 +206,8 @@ export default function App() {
 
   useEffect(() => {
     const panel = settingsOpen ? 'settings' : backupOpen ? 'backup' : undefined
-    saveSessionState({ view, episodeId: doc?.episode?.id, panel } satisfies SessionState)
-  }, [view, doc, settingsOpen, backupOpen])
+    saveSessionState({ episodeId: doc?.episode?.id, panel } satisfies SessionState)
+  }, [doc, settingsOpen, backupOpen])
 
   const openEpisode = useCallback(
     async (episode: Episode) => {
@@ -242,6 +245,9 @@ export default function App() {
         if (restored) await openFile(restored.file, restored.handle, restored.episode)
         else setSessionOpen(false)
         setRestoring(false)
+        // 주소는 글을 여는 중인데 열 글이 없으면 주소를 바로잡는다
+        const route = parseRoute()
+        if (!restored && route.reading) replaceRoute({ ...route, reading: false })
       })
   }, [openFile, initialSession])
 
@@ -255,15 +261,47 @@ export default function App() {
     setProgress(0)
   }, [])
 
+  // ── 화면 이동 (주소와 함께) ───────────────────────────
+  const navigate = useCallback(
+    (next: View, replace = false) => {
+      if (doc) closeDoc()
+      const route: Route = { view: next, reading: false }
+      if (replace) replaceRoute(route)
+      else pushRoute(route)
+      setView(next)
+    },
+    [doc, closeDoc],
+  )
+
+  // 브라우저·폰의 뒤로/앞으로 가기, 주소 직접 입력
+  const docRef = useRef(doc)
+  docRef.current = doc
+  useEffect(() => {
+    const onPop = () => {
+      const route = parseRoute()
+      setView(route.view)
+      if (!route.reading && docRef.current) closeDoc()
+      // 앞으로 가기로 /read에 왔는데 열린 글이 없으면 주소를 바로잡는다
+      if (route.reading && !docRef.current) replaceRoute({ ...route, reading: false })
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [closeDoc])
+
   const goBack = () => {
-    if (doc) closeDoc()
-    else setView(view.name === 'work' ? { name: 'library' } : HOME)
+    // 앱 안에서 넘어온 화면이면 브라우저 뒤로 가기와 똑같이 움직인다
+    if (historyDepth() > 0) {
+      history.back()
+      return
+    }
+    // 링크로 바로 들어왔거나 새로고침한 화면: 한 단계 위 화면으로 바꿔 넣는다
+    if (doc) {
+      closeDoc()
+      replaceRoute({ view, reading: false })
+    } else navigate(view.name === 'work' ? { name: 'library' } : HOME, true)
   }
 
-  const openLibrary = () => {
-    if (doc) closeDoc()
-    setView({ name: 'library' })
-  }
+  const openLibrary = () => navigate({ name: 'library' })
 
   const libraryEpisode = useMemo(
     () => (doc ? library.flatMap((s) => s.episodes).find((e) => episodeKey(e) === doc.key) : undefined),
@@ -319,7 +357,7 @@ export default function App() {
     if (!confirm(`'${summary.work.title}'과(와) ${summary.episodes.length}편을 모두 서재에서 삭제할까요?`)) return
     await deleteWork(summary.work.id)
     await refreshLibrary()
-    setView({ name: 'library' })
+    navigate({ name: 'library' }, true)
   }
 
   const changeCover = async (summary: WorkSummary, file: File | null) => {
@@ -546,7 +584,8 @@ export default function App() {
         return
       }
       if (e.key === 'Escape') {
-        if (settingsOpen) setSettingsOpen(false)
+        if (menuOpen) setMenuOpen(false)
+        else if (settingsOpen) setSettingsOpen(false)
         else if (searchOpen) closeSearch()
         else if (gotoOpen) closeGoto()
         else if (focusMode) setFocusMode(false)
@@ -578,6 +617,7 @@ export default function App() {
     doc,
     settings,
     settingsOpen,
+    menuOpen,
     searchOpen,
     gotoOpen,
     focusMode,
@@ -633,13 +673,31 @@ export default function App() {
     }
   }, [openFile])
 
+  // 휴대폰 읽기 화면의 ⋯ 메뉴 — 머리에서 숨긴 버튼들
+  const readerMenuItems: ReaderMenuItem[] = doc
+    ? [
+        libraryEpisode
+          ? {
+              icon: <SavedIcon />,
+              label: '서재에서 작품 보기',
+              onSelect: () => navigate({ name: 'work', workId: libraryEpisode.workId }),
+            }
+          : { icon: <SaveIcon />, label: '서재에 담기', onSelect: () => startAdd([{ file: doc.file, buffer: doc.buffer }]) },
+        { icon: <SearchIcon />, label: '검색', hint: 'Ctrl F', onSelect: openSearch },
+        { icon: <FocusIcon />, label: '집중 모드', hint: 'F', onSelect: toggleFocus },
+        // 순서는 PC 머리 버튼 순서와 같게 (담기 · 검색 · 집중 · 서재 · 열기)
+        { icon: <LibraryIcon />, label: '내 서재', onSelect: openLibrary },
+        { icon: <OpenIcon />, label: '다른 파일 열기', hint: 'Ctrl O', onSelect: pickFile },
+      ]
+    : []
+
   const activeLine = search.matches[activeMatch]?.line ?? -1
 
   return (
     <div className={`app${focusMode ? ' focus' : ''}`}>
-      <header className="toolbar">
+      <header className={`toolbar${doc ? ' reading' : ''}`}>
         {(doc || view.name !== 'home') && (
-          <button className="icon-btn back" onClick={goBack} title="뒤로">
+          <button className="icon-btn round back" onClick={goBack} title="뒤로">
             <BackIcon />
           </button>
         )}
@@ -648,19 +706,19 @@ export default function App() {
             <span className="name" title={docTitle}>
               {docTitle}
             </span>
-          ) : view.name !== 'home' ? (
-            <span className="brand">내 서재</span>
-          ) : (
-            <span className="brand">Text Viewer</span>
-          )}
+          ) : view.name === 'home' ? (
+            <span className="brand">
+              <FileIcon />
+              Text Viewer
+            </span>
+          ) : null}
         </div>
         {doc &&
           (libraryEpisode ? (
             <button
-              className="icon-btn"
+              className="icon-btn round reader-extra"
               onClick={() => {
-                closeDoc()
-                setView({ name: 'work', workId: libraryEpisode.workId })
+                navigate({ name: 'work', workId: libraryEpisode.workId })
               }}
               title="서재에 있어요 · 작품 보기"
             >
@@ -668,7 +726,7 @@ export default function App() {
             </button>
           ) : (
             <button
-              className="icon-btn"
+              className="icon-btn round reader-extra"
               onClick={() => startAdd([{ file: doc.file, buffer: doc.buffer }])}
               title="서재에 담기"
             >
@@ -678,36 +736,40 @@ export default function App() {
         {doc && (
           <>
             <button
-              className={`icon-btn${searchOpen ? ' on' : ''}`}
+              className={`icon-btn round reader-extra${searchOpen ? ' on' : ''}`}
               onClick={() => (searchOpen ? closeSearch() : openSearch())}
               title="검색 (Ctrl+F)"
             >
               <SearchIcon />
             </button>
-            <button className="icon-btn" onClick={toggleFocus} title="집중 모드 (F)">
+            <button className="icon-btn round reader-extra" onClick={toggleFocus} title="집중 모드 (F)">
               <FocusIcon />
             </button>
           </>
         )}
         <button
-          className={`icon-btn${settingsOpen ? ' on' : ''}`}
+          className={`icon-btn round${settingsOpen ? ' on' : ''}`}
           onClick={() => setSettingsOpen((v) => !v)}
-          title={settingsOpen ? '설정 닫기' : '보기 설정'}
+          title="보기 설정"
           data-settings-toggle
         >
-          {/* 설정은 바로 적용되므로, 열려 있을 때는 같은 자리에서 닫을 수 있게 X로 바꾼다 */}
-          {settingsOpen ? <CloseIcon /> : <TypeIcon />}
+          <TypeIcon />
         </button>
         <button
-          className={`icon-btn${!doc && view.name !== 'home' ? ' on' : ''}`}
+          className={`icon-btn round reader-extra${!doc && view.name !== 'home' ? ' on' : ''}`}
           onClick={openLibrary}
           title="내 서재"
         >
           <LibraryIcon />
         </button>
-        <button className="icon-btn" onClick={pickFile} title="파일 열기 (Ctrl+O)">
+        <button className="icon-btn round reader-extra" onClick={pickFile} title="파일 열기 (Ctrl+O)">
           <OpenIcon />
         </button>
+        {doc && (
+          <button className={`icon-btn round more-btn${menuOpen ? ' on' : ''}`} onClick={() => setMenuOpen(true)} title="더보기">
+            <MoreIcon size={18} />
+          </button>
+        )}
       </header>
 
       <main className="main">
@@ -744,8 +806,8 @@ export default function App() {
           <Library
             items={library}
             positions={positions}
-            onOpen={(s) => (s.episodes.length === 1 ? openEpisode(s.episodes[0]) : setView({ name: 'work', workId: s.work.id }))}
-            onDetail={(s) => setView({ name: 'work', workId: s.work.id })}
+            onOpen={(s) => (s.episodes.length === 1 ? openEpisode(s.episodes[0]) : navigate({ name: 'work', workId: s.work.id }))}
+            onDetail={(s) => navigate({ name: 'work', workId: s.work.id })}
             onAdd={() => {
               addTargetRef.current = null
               libraryInputRef.current?.click()
@@ -780,6 +842,8 @@ export default function App() {
             onClose={closeGoto}
           />
         )}
+        {menuOpen && doc && <ReaderMenu items={readerMenuItems} onClose={() => setMenuOpen(false)} />}
+        {settingsOpen && <div className="sheet-backdrop" aria-hidden />}
         {settingsOpen && (
           <SettingsPanel
             settings={settings}

@@ -16,6 +16,7 @@ import {
   Cloud,
   CircleUserRound,
   Ellipsis,
+  FileText,
   FolderOpen,
   History,
   ImageMinus,
@@ -46,6 +47,7 @@ function icon(Component: LucideIcon, defaultSize: number) {
 }
 
 export const OpenIcon = icon(FolderOpen, 18)
+export const FileIcon = icon(FileText, 18)
 export const BackIcon = icon(ChevronLeft, 20)
 export const SearchIcon = icon(Search, 18)
 export const TypeIcon = icon(CaseSensitive, 18)

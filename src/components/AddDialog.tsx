@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { PendingGroup, Work } from '../lib/library'
+import { CloseIcon } from './Icons'
 
 interface AddDialogProps {
   groups: PendingGroup[]
@@ -19,11 +20,16 @@ export function AddDialog({ groups: initial, works, onCancel, onConfirm }: AddDi
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
       <div className="modal" role="dialog" aria-label="서재에 담기">
-        <header className="panel-head">
-          <h2>서재에 담기</h2>
-          <p>
-            {fileCount}개 파일 · {groups.length}개 작품
-          </p>
+        <header className="sheet-head">
+          <div>
+            <span className="eyebrow">ADD TO LIBRARY</span>
+            <p>
+              {fileCount}개 파일을 {groups.length}개 작품으로 담아요.
+            </p>
+          </div>
+          <button className="round-btn sheet-close" onClick={onCancel} title="닫기">
+            <CloseIcon />
+          </button>
         </header>
 
         <div className="groups">

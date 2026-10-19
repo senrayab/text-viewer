@@ -4,6 +4,7 @@ import { connectedAccount, driveConfigured, preloadGoogle } from '../lib/drive'
 import { FONT_SIZE, FONTS, LINE_HEIGHT, THEMES, WIDTHS, clamp, type Settings } from '../settings'
 import {
   ChevronIcon,
+  CloseIcon,
   CloudIcon,
   FontSizeIcon,
   LineHeightIcon,
@@ -177,14 +178,19 @@ export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: Set
 
   return (
     <div className="panel" ref={ref} onScroll={(e) => rememberScroll(e.currentTarget.scrollTop)}>
-      <header className="panel-head">
-        <h2>보기 설정</h2>
-        <p>편하게 읽을 수 있도록 맞춰보세요</p>
+      <header className="sheet-head">
+        <div>
+          <span className="eyebrow">SETTINGS</span>
+          <p>편하게 읽을 수 있도록 맞춰보세요.</p>
+        </div>
+        <button className="round-btn sheet-close" onClick={onClose} title="닫기">
+          <CloseIcon />
+        </button>
       </header>
 
       {/* 지금 설정으로 본문이 어떻게 보이는지 */}
       <div className="preview">
-        <span className="eyebrow">미리보기</span>
+        <span className="preview-label">미리보기</span>
         <p style={{ fontFamily: fontStack, fontSize: settings.fontSize, lineHeight: settings.lineHeight }}>
           한 줄씩, 편안하게 읽어보세요.
         </p>
