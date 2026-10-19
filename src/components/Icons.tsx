@@ -1,16 +1,27 @@
 import {
   ALargeSmall,
+  BookmarkCheck,
+  BookmarkPlus,
   CaseSensitive,
   ChevronDown,
   ChevronLeft,
+  ChevronRight,
   ChevronUp,
+  Ellipsis,
   FolderOpen,
   History,
+  ImageMinus,
+  ImagePlus,
+  Library,
   ListOrdered,
   Maximize,
   Minus,
+  Pencil,
   Plus,
   Search,
+  Share,
+  Smartphone,
+  Trash2,
   UnfoldVertical,
   WrapText,
   X,
@@ -44,3 +55,16 @@ export const FontSizeIcon = icon(ALargeSmall, 16)
 export const LineHeightIcon = icon(UnfoldVertical, 16)
 export const LineNumberIcon = icon(ListOrdered, 16)
 export const WrapIcon = icon(WrapText, 16)
+
+// 내 서재
+export const LibraryIcon = icon(Library, 18)
+export const SaveIcon = icon(BookmarkPlus, 18)
+export const SavedIcon = icon(BookmarkCheck, 18)
+export const MoreIcon = icon(Ellipsis, 16)
+export const EditIcon = icon(Pencil, 16)
+export const TrashIcon = icon(Trash2, 16)
+export const CoverIcon = icon(ImagePlus, 16)
+export const CoverRemoveIcon = icon(ImageMinus, 16)
+export const NextIcon = icon(ChevronRight, 18)
+export const PhoneIcon = icon(Smartphone, 18)
+export const ShareIcon = icon(Share, 14)

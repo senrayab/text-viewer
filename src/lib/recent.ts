@@ -6,11 +6,14 @@
 // - 내용 사본: 핸들이 없는 브라우저(모바일 등)에서 다시 열 때, 그리고 새로고침 후 자동 복원에 쓴다.
 //   핸들은 사용자가 누른 순간에만 권한을 요청할 수 있어서 새로고침 직후 자동으로 열 수 없기 때문이다.
 
-const DB_NAME = 'text-viewer'
+import { openDb, request } from './db'
+
 const STORE = 'recent'
 export type Slot = 'recent' | 'session'
 /** 이 탭에서 문서를 보고 있는 중인지 — 새로고침 시 자동 복원 여부를 정한다 */
 const SESSION_KEY = 'text-viewer:open'
+/** 이 탭에서 보던 화면(서재·작품·편) — 새로고침 후 같은 화면으로 돌아오는 데 쓴다 */
+const SESSION_STATE_KEY = 'text-viewer:state'
 /** 사본으로 저장할 수 있는 최대 크기 */
 const MAX_COPY_SIZE = 30 * 1024 * 1024
 
@@ -41,23 +44,21 @@ export function setSessionOpen(open: boolean) {
   }
 }
 
-function request<T>(req: IDBRequest<T>) {
-  return new Promise<T>((resolve, reject) => {
-    req.onsuccess = () => resolve(req.result)
-    req.onerror = () => reject(req.error)
-  })
+export function loadSessionState<T>(): T | undefined {
+  try {
+    const raw = sessionStorage.getItem(SESSION_STATE_KEY)
+    return raw ? JSON.parse(raw) : undefined
+  } catch {
+    return undefined
+  }
 }
 
-let dbPromise: Promise<IDBDatabase> | null = null
-
-function openDb() {
-  dbPromise ??= new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1)
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE)
-    req.onsuccess = () => resolve(req.result)
-    req.onerror = () => reject(req.error)
-  })
-  return dbPromise
+export function saveSessionState(state: unknown) {
+  try {
+    sessionStorage.setItem(SESSION_STATE_KEY, JSON.stringify(state))
+  } catch {
+    // 무시
+  }
 }
 
 async function store(mode: IDBTransactionMode) {

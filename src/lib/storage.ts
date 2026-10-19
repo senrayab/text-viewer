@@ -2,7 +2,8 @@ import { DEFAULT_SETTINGS, type Settings } from '../settings'
 
 const SETTINGS_KEY = 'text-viewer:settings'
 const POSITIONS_KEY = 'text-viewer:positions'
-const MAX_POSITIONS = 100
+// 서재의 편마다 진행률을 보여주므로 넉넉히 기억한다
+const MAX_POSITIONS = 1000
 
 export function loadSettings(): Settings {
   try {
@@ -21,9 +22,16 @@ export function saveSettings(settings: Settings) {
   }
 }
 
-type Positions = Record<string, { line: number; t: number }>
+/** line: 마지막으로 읽던 줄(1부터), progress: 스크롤 진행률(0~1), t: 마지막으로 읽은 시각 */
+export interface Position {
+  line: number
+  t: number
+  progress?: number
+}
 
-function readPositions(): Positions {
+type Positions = Record<string, Position>
+
+export function readPositions(): Positions {
   try {
     return JSON.parse(localStorage.getItem(POSITIONS_KEY) ?? '{}')
   } catch {
@@ -36,10 +44,10 @@ export function loadPosition(key: string): number {
   return readPositions()[key]?.line ?? 1
 }
 
-export function savePosition(key: string, line: number) {
+export function savePosition(key: string, line: number, progress: number) {
   try {
     const all = readPositions()
-    all[key] = { line, t: Date.now() }
+    all[key] = { line, t: Date.now(), progress }
     const recent = Object.entries(all)
       .sort((a, b) => b[1].t - a[1].t)
       .slice(0, MAX_POSITIONS)

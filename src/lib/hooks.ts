@@ -52,6 +52,21 @@ export function useUpdateAvailable() {
   return available
 }
 
+/** Blob을 화면에 쓸 수 있는 URL로 바꾸고, 쓰지 않게 되면 해제한다 */
+export function useObjectUrl(blob?: Blob) {
+  const [url, setUrl] = useState<string>()
+  useEffect(() => {
+    if (!blob) {
+      setUrl(undefined)
+      return
+    }
+    const next = URL.createObjectURL(blob)
+    setUrl(next)
+    return () => URL.revokeObjectURL(next)
+  }, [blob])
+  return url
+}
+
 export function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`

@@ -46,6 +46,8 @@ interface ViewerProps {
   scrollerRef: RefObject<HTMLDivElement>
   contentRef: RefObject<HTMLDivElement>
   onScroll: () => void
+  /** 본문 끝에 붙는 내용 (연재글의 다음 편 버튼 등) */
+  footer?: ReactNode
 }
 
 export const Viewer = memo(function Viewer({
@@ -57,6 +59,7 @@ export const Viewer = memo(function Viewer({
   scrollerRef,
   contentRef,
   onScroll,
+  footer,
 }: ViewerProps) {
   const style = {
     '--fs': `${settings.fontSize}px`,
@@ -82,6 +85,7 @@ export const Viewer = memo(function Viewer({
             active={i === activeLine ? activeMatch : -1}
           />
         ))}
+        {footer}
       </div>
     </div>
   )

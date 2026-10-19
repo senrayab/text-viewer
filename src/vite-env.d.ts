@@ -21,6 +21,16 @@ interface Window {
   showOpenFilePicker?(options?: OpenFilePickerOptions): Promise<FileSystemFileHandle[]>
 }
 
+// 앱 설치 안내 — Chromium 계열에만 있다
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
+interface WindowEventMap {
+  beforeinstallprompt: BeforeInstallPromptEvent
+}
+
 interface DataTransferItem {
   getAsFileSystemHandle?(): Promise<FileSystemHandle | null>
 }

@@ -1,24 +1,55 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AddDialog } from './components/AddDialog'
 import { EmptyState } from './components/EmptyState'
 import { GotoBar } from './components/GotoBar'
-import { BackIcon, CloseIcon, FocusIcon, OpenIcon, SearchIcon, TypeIcon } from './components/Icons'
+import {
+  BackIcon,
+  CloseIcon,
+  FocusIcon,
+  LibraryIcon,
+  NextIcon,
+  OpenIcon,
+  SaveIcon,
+  SavedIcon,
+  SearchIcon,
+  TypeIcon,
+} from './components/Icons'
+import { Library } from './components/Library'
 import { SearchBar } from './components/SearchBar'
 import { SettingsPanel } from './components/SettingsPanel'
 import { Viewer, type MatchRange } from './components/Viewer'
+import { WorkDetail } from './components/WorkDetail'
 import { ENCODINGS, decode, detectEncoding, type EncodingChoice } from './lib/decode'
 import { formatBytes, useDebounced, useResolvedTheme, useUpdateAvailable } from './lib/hooks'
+import {
+  addToLibrary,
+  deleteEpisode,
+  deleteWork,
+  episodeKey,
+  groupFiles,
+  listLibrary,
+  loadEpisodeFile,
+  parseEpisodeName,
+  prepareCover,
+  updateWork,
+  type Episode,
+  type PendingGroup,
+  type WorkSummary,
+} from './lib/library'
 import { findMatches } from './lib/search'
 import {
   clearEntry,
   isSessionOpen,
   loadEntry,
+  loadSessionState,
   reopenRecent,
   restoreRecent,
   saveEntry,
+  saveSessionState,
   setSessionOpen,
   type RecentEntry,
 } from './lib/recent'
-import { loadPosition, loadSettings, savePosition, saveSettings } from './lib/storage'
+import { loadPosition, loadSettings, readPositions, savePosition, saveSettings } from './lib/storage'
 import { FONT_SIZE, THEMES, clamp, type Settings } from './settings'
 
 interface Doc {
@@ -28,9 +59,21 @@ interface Doc {
   buffer: ArrayBuffer
   file: File
   handle?: FileSystemFileHandle
+  /** 서재에서 연 편 */
+  episode?: Episode
+}
+
+/** 문서를 열지 않았을 때 보이는 화면. 문서를 닫으면 이 화면으로 돌아온다. */
+type View = { name: 'home' } | { name: 'library' } | { name: 'work'; workId: string }
+
+/** 새로고침 후 같은 화면으로 돌아오기 위해 탭에 기억해 두는 상태 */
+interface SessionState {
+  view: View
+  episodeId?: string
 }
 
 const ACCEPT = '.txt,.text,.log,text/plain'
+const HOME: View = { name: 'home' }
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings)
@@ -42,6 +85,9 @@ export default function App() {
   const theme = useResolvedTheme(settings.theme)
   useEffect(() => {
     document.documentElement.dataset.theme = theme
+    // 모바일 상단 상태 표시줄 색도 테마 배경에 맞춘다
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg)
   }, [theme])
 
   // ── 문서 ──────────────────────────────────────────────
@@ -52,10 +98,6 @@ export default function App() {
   const encoding = encodingChoice === 'auto' ? detected : encodingChoice
   const lines = useMemo(() => (doc ? decode(doc.buffer, encoding).split(/\r\n|\r|\n/) : []), [doc, encoding])
   const charCount = useMemo(() => lines.reduce((n, l) => n + l.length, 0), [lines])
-
-  useEffect(() => {
-    document.title = doc ? `${doc.name} — Text Viewer` : 'Text Viewer'
-  }, [doc])
 
   // ── UI 상태 ───────────────────────────────────────────
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -83,7 +125,7 @@ export default function App() {
     return () => clearTimeout(id)
   }, [toast])
 
-  const openFile = useCallback(async (file: File, handle?: FileSystemFileHandle) => {
+  const openFile = useCallback(async (file: File, handle?: FileSystemFileHandle, episode?: Episode) => {
     try {
       const buffer = await file.arrayBuffer()
       setDoc({
@@ -93,6 +135,7 @@ export default function App() {
         buffer,
         file,
         handle,
+        episode,
       })
       setEncodingChoice('auto')
       setError(null)
@@ -122,6 +165,48 @@ export default function App() {
     saved.then(() => loadEntry('recent')).then(setRecent)
   }, [doc, settings.rememberRecent])
 
+  // ── 내 서재 ───────────────────────────────────────────
+  // 아래 effect가 곧바로 덮어쓰므로 새로고침 전 상태는 첫 렌더에서 한 번만 읽어 둔다
+  const [initialSession] = useState(() => loadSessionState<SessionState>())
+  const [view, setView] = useState<View>(initialSession?.view ?? HOME)
+  const [library, setLibrary] = useState<WorkSummary[]>([])
+  const [libraryLoaded, setLibraryLoaded] = useState(false)
+  const [positions, setPositions] = useState(readPositions)
+  const [adding, setAdding] = useState<PendingGroup[] | null>(null)
+  const libraryInputRef = useRef<HTMLInputElement>(null)
+  /** "편 추가하기"로 파일을 고를 때 담을 작품 */
+  const addTargetRef = useRef<string | null>(null)
+
+  const refreshLibrary = useCallback(
+    () =>
+      listLibrary()
+        .then(setLibrary)
+        .catch(() => showToast('서재를 불러오지 못했어요.'))
+        .finally(() => setLibraryLoaded(true)),
+    [showToast],
+  )
+  useEffect(() => {
+    refreshLibrary()
+  }, [refreshLibrary])
+
+  // 문서를 닫고 목록으로 돌아올 때 읽은 정도를 새로 반영한다
+  useEffect(() => {
+    if (!doc) setPositions(readPositions())
+  }, [doc, view])
+
+  useEffect(() => {
+    saveSessionState({ view, episodeId: doc?.episode?.id } satisfies SessionState)
+  }, [view, doc])
+
+  const openEpisode = useCallback(
+    async (episode: Episode) => {
+      const file = await loadEpisodeFile(episode).catch(() => undefined)
+      if (file) openFile(file, undefined, episode)
+      else showToast('이 편의 내용을 찾을 수 없어요.')
+    },
+    [openFile, showToast],
+  )
+
   // 새로고침 전에 보던 문서가 있으면 다시 연다
   const [restoring, setRestoring] = useState(isSessionOpen)
   const restoreStarted = useRef(false)
@@ -132,15 +217,27 @@ export default function App() {
       clearEntry('session')
       return
     }
-    loadEntry('session').then(async (entry) => {
-      const restored = entry ? await restoreRecent(entry) : undefined
-      if (restored) await openFile(restored.file, restored.handle)
-      else setSessionOpen(false)
-      setRestoring(false)
-    })
-  }, [openFile])
+    const restore = async (): Promise<{ file: File; handle?: FileSystemFileHandle; episode?: Episode } | undefined> => {
+      // 서재에서 연 편이면 서재에서 다시 꺼낸다 — 다음 편 버튼과 뒤로 가기가 그대로 동작하도록
+      const episodeId = initialSession?.episodeId
+      if (episodeId) {
+        const episode = (await listLibrary()).flatMap((s) => s.episodes).find((e) => e.id === episodeId)
+        const file = episode && (await loadEpisodeFile(episode))
+        if (file) return { file, episode }
+      }
+      const entry = await loadEntry('session')
+      return entry ? await restoreRecent(entry) : undefined
+    }
+    restore()
+      .catch(() => undefined)
+      .then(async (restored) => {
+        if (restored) await openFile(restored.file, restored.handle, restored.episode)
+        else setSessionOpen(false)
+        setRestoring(false)
+      })
+  }, [openFile, initialSession])
 
-  const goHome = useCallback(() => {
+  const closeDoc = useCallback(() => {
     setDoc(null)
     setSessionOpen(false)
     clearEntry('session')
@@ -149,6 +246,121 @@ export default function App() {
     setFocusMode(false)
     setProgress(0)
   }, [])
+
+  const goBack = () => {
+    if (doc) closeDoc()
+    else setView(view.name === 'work' ? { name: 'library' } : HOME)
+  }
+
+  const openLibrary = () => {
+    if (doc) closeDoc()
+    setView({ name: 'library' })
+  }
+
+  const libraryEpisode = useMemo(
+    () => (doc ? library.flatMap((s) => s.episodes).find((e) => episodeKey(e) === doc.key) : undefined),
+    [doc, library],
+  )
+
+  const startAdd = useCallback(
+    (items: { file: File; buffer: ArrayBuffer }[]) => {
+      const pending = items.map(({ file, buffer }) => ({ file, buffer, parsed: parseEpisodeName(file.name) }))
+      setAdding(groupFiles(pending, library.map((s) => s.work)))
+    },
+    [library],
+  )
+
+  const confirmAdd = useCallback(
+    async (groups: PendingGroup[]) => {
+      setAdding(null)
+      try {
+        await addToLibrary(groups)
+        await refreshLibrary()
+        const count = groups.reduce((n, g) => n + g.files.length, 0)
+        showToast(count > 1 ? `${count}편을 서재에 담았어요.` : '서재에 담았어요.')
+      } catch {
+        showToast('서재에 담지 못했어요. 저장 공간을 확인해 주세요.', 2600)
+      }
+    },
+    [refreshLibrary, showToast],
+  )
+
+  const onLibraryFiles = async (files: File[]) => {
+    const items = await Promise.all(files.map(async (file) => ({ file, buffer: await file.arrayBuffer() })))
+    const target = addTargetRef.current
+    addTargetRef.current = null
+    if (!target) {
+      startAdd(items)
+      return
+    }
+    // 작품 화면의 "편 추가하기" — 묻지 않고 그 작품에 담는다
+    const pending = items.map(({ file, buffer }) => ({ file, buffer, parsed: parseEpisodeName(file.name) }))
+    confirmAdd([{ target, title: '', files: groupFiles(pending, []).flatMap((g) => g.files) }])
+  }
+
+  const workSummary = view.name === 'work' ? library.find((s) => s.work.id === view.workId) : undefined
+
+  const removeEpisode = async (episode: Episode) => {
+    if (!confirm(`'${episode.title}'을(를) 서재에서 삭제할까요?`)) return
+    await deleteEpisode(episode)
+    await refreshLibrary()
+  }
+
+  const removeWork = async (summary: WorkSummary) => {
+    if (!confirm(`'${summary.work.title}'과(와) ${summary.episodes.length}편을 모두 서재에서 삭제할까요?`)) return
+    await deleteWork(summary.work.id)
+    await refreshLibrary()
+    setView({ name: 'library' })
+  }
+
+  const changeCover = async (summary: WorkSummary, file: File | null) => {
+    try {
+      await updateWork(summary.work.id, { cover: file ? await prepareCover(file) : undefined })
+      await refreshLibrary()
+    } catch {
+      showToast('이 이미지는 표지로 쓸 수 없어요.')
+    }
+  }
+
+  // 연재글이면 본문 끝에 다음 편으로 넘어가는 버튼을 단다
+  const episodeNav = useMemo(() => {
+    const episode = doc?.episode
+    if (!episode) return null
+    const summary = library.find((s) => s.work.id === episode.workId)
+    if (!summary) return null
+    const index = summary.episodes.findIndex((e) => e.id === episode.id)
+    return { summary, current: summary.episodes[index] ?? episode, next: summary.episodes[index + 1] }
+  }, [doc, library])
+
+  const viewerFooter = useMemo(() => {
+    if (!episodeNav || episodeNav.summary.episodes.length < 2) return undefined
+    const { current, next } = episodeNav
+    return (
+      <div className="ep-footer">
+        <span className="ep-end">{current.title} 끝</span>
+        {next ? (
+          <button className="next-ep" onClick={() => openEpisode(next)}>
+            <span>
+              <small>다음 편</small> {next.title}
+            </span>
+            <NextIcon />
+          </button>
+        ) : (
+          <span className="ep-last">마지막 편이에요</span>
+        )}
+      </div>
+    )
+  }, [episodeNav, openEpisode])
+
+  const docTitle = episodeNav
+    ? episodeNav.summary.episodes.length > 1
+      ? `${episodeNav.summary.work.title} · ${episodeNav.current.title}`
+      : episodeNav.summary.work.title
+    : doc?.name
+
+  useEffect(() => {
+    document.title = docTitle ? `${docTitle} — Text Viewer` : 'Text Viewer'
+  }, [docTitle])
 
   // 파일 핸들을 받을 수 있는 브라우저에서는 최근 문서로 원본을 다시 열 수 있도록 파일 선택 창을 직접 띄운다
   const pickFile = useCallback(async () => {
@@ -203,7 +415,8 @@ export default function App() {
       if (!scroller || !content) return
 
       const max = scroller.scrollHeight - scroller.clientHeight
-      setProgress(max > 0 ? scroller.scrollTop / max : 1)
+      const ratio = max > 0 ? scroller.scrollTop / max : 1
+      setProgress(ratio)
 
       const box = scroller.getBoundingClientRect()
       const x = Math.max(content.getBoundingClientRect().left, box.left) + 24
@@ -213,7 +426,7 @@ export default function App() {
       const key = docKeyRef.current
       if (!key) return
       clearTimeout(saveTimer.current)
-      saveTimer.current = window.setTimeout(() => savePosition(key, topLineRef.current), 400)
+      saveTimer.current = window.setTimeout(() => savePosition(key, topLineRef.current, ratio), 400)
     })
   }, [])
 
@@ -414,20 +627,43 @@ export default function App() {
   return (
     <div className={`app${focusMode ? ' focus' : ''}`}>
       <header className="toolbar">
-        {doc && (
-          <button className="icon-btn back" onClick={goHome} title="처음 화면">
+        {(doc || view.name !== 'home') && (
+          <button className="icon-btn back" onClick={goBack} title="뒤로">
             <BackIcon />
           </button>
         )}
         <div className="title">
           {doc ? (
-            <span className="name" title={doc.name}>
-              {doc.name}
+            <span className="name" title={docTitle}>
+              {docTitle}
             </span>
+          ) : view.name !== 'home' ? (
+            <span className="brand">내 서재</span>
           ) : (
             <span className="brand">Text Viewer</span>
           )}
         </div>
+        {doc &&
+          (libraryEpisode ? (
+            <button
+              className="icon-btn"
+              onClick={() => {
+                closeDoc()
+                setView({ name: 'work', workId: libraryEpisode.workId })
+              }}
+              title="서재에 있어요 · 작품 보기"
+            >
+              <SavedIcon />
+            </button>
+          ) : (
+            <button
+              className="icon-btn"
+              onClick={() => startAdd([{ file: doc.file, buffer: doc.buffer }])}
+              title="서재에 담기"
+            >
+              <SaveIcon />
+            </button>
+          ))}
         {doc && (
           <>
             <button
@@ -445,10 +681,18 @@ export default function App() {
         <button
           className={`icon-btn${settingsOpen ? ' on' : ''}`}
           onClick={() => setSettingsOpen((v) => !v)}
-          title="보기 설정"
+          title={settingsOpen ? '설정 닫기' : '보기 설정'}
           data-settings-toggle
         >
-          <TypeIcon />
+          {/* 설정은 바로 적용되므로, 열려 있을 때는 같은 자리에서 닫을 수 있게 X로 바꾼다 */}
+          {settingsOpen ? <CloseIcon /> : <TypeIcon />}
+        </button>
+        <button
+          className={`icon-btn${!doc && view.name !== 'home' ? ' on' : ''}`}
+          onClick={openLibrary}
+          title="내 서재"
+        >
+          <LibraryIcon />
         </button>
         <button className="icon-btn" onClick={pickFile} title="파일 열기 (Ctrl+O)">
           <OpenIcon />
@@ -468,12 +712,36 @@ export default function App() {
               scrollerRef={scrollerRef}
               contentRef={contentRef}
               onScroll={onScroll}
+              footer={viewerFooter}
             />
           </>
+        ) : restoring || (view.name !== 'home' && !libraryLoaded) ? null : workSummary ? (
+          <WorkDetail
+            summary={workSummary}
+            positions={positions}
+            onOpenEpisode={openEpisode}
+            onRename={(title) => updateWork(workSummary.work.id, { title }).then(refreshLibrary)}
+            onCover={(file) => changeCover(workSummary, file)}
+            onAddEpisodes={() => {
+              addTargetRef.current = workSummary.work.id
+              libraryInputRef.current?.click()
+            }}
+            onDeleteEpisode={removeEpisode}
+            onDeleteWork={() => removeWork(workSummary)}
+          />
+        ) : view.name !== 'home' ? (
+          <Library
+            items={library}
+            positions={positions}
+            onOpen={(s) => (s.episodes.length === 1 ? openEpisode(s.episodes[0]) : setView({ name: 'work', workId: s.work.id }))}
+            onDetail={(s) => setView({ name: 'work', workId: s.work.id })}
+            onAdd={() => {
+              addTargetRef.current = null
+              libraryInputRef.current?.click()
+            }}
+          />
         ) : (
-          !restoring && (
-            <EmptyState onOpen={pickFile} recentName={recent?.name} onOpenRecent={openRecent} error={error} />
-          )
+          <EmptyState onOpen={pickFile} recentName={recent?.name} onOpenRecent={openRecent} error={error} />
         )}
 
         {searchOpen && (
@@ -545,6 +813,15 @@ export default function App() {
         </footer>
       )}
 
+      {adding && (
+        <AddDialog
+          groups={adding}
+          works={library.map((s) => s.work)}
+          onCancel={() => setAdding(null)}
+          onConfirm={confirmAdd}
+        />
+      )}
+
       {dragging && (
         <div className="drop-overlay">
           <div>여기에 놓아서 열기</div>
@@ -559,6 +836,18 @@ export default function App() {
         onChange={(e) => {
           const file = e.target.files?.[0]
           if (file) openFile(file)
+          e.target.value = ''
+        }}
+      />
+      <input
+        ref={libraryInputRef}
+        type="file"
+        accept={ACCEPT}
+        multiple
+        hidden
+        onChange={(e) => {
+          const files = [...(e.target.files ?? [])]
+          if (files.length) onLibraryFiles(files)
           e.target.value = ''
         }}
       />
