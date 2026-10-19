@@ -1350,6 +1350,11 @@ mark.active {
   color: #c4553a;
 }
 
+.card .row.action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .section-head {
   display: flex;
   align-items: center;

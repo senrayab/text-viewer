@@ -102,6 +102,11 @@ export async function uploadBackup(blob: Blob) {
   await api('/upload/drive/v3/files?uploadType=multipart', { method: 'POST', body: form })
 }
 
+/** 드라이브 앱 전용 공간의 백업 파일을 지운다 (숨겨진 공간이라 드라이브 목록에서는 지울 수 없다) */
+export async function deleteBackup(id: string) {
+  await api(`/drive/v3/files/${id}`, { method: 'DELETE' })
+}
+
 export async function downloadBackup(id: string) {
   return (await api(`/drive/v3/files/${id}?alt=media`)).blob()
 }

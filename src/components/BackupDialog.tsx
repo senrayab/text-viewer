@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { PRIVACY_URL } from '../config'
 import { createBackup, restoreBackup, type BackupSummary } from '../lib/backup'
 import {
+  deleteBackup,
   downloadBackup,
   driveConfigured,
   findBackup,
@@ -12,14 +13,14 @@ import {
   type DriveBackup,
 } from '../lib/drive'
 import { formatBytes } from '../lib/hooks'
-import { CloseIcon, CloudIcon } from './Icons'
+import { CloseIcon, CloudIcon, TrashIcon } from './Icons'
 
 interface BackupDialogProps {
   onClose: () => void
   onRestored: (summary: BackupSummary) => void
 }
 
-type Busy = 'connect' | 'backup' | 'restore' | null
+type Busy = 'connect' | 'backup' | 'restore' | 'delete' | null
 
 const ERRORS: Record<string, string> = {
   'google-unavailable': '구글에 연결할 수 없어요. 인터넷 연결을 확인해 주세요.',
@@ -94,6 +95,16 @@ export function BackupDialog({ onClose, onRestored }: BackupDialogProps) {
     })
   }
 
+  const remove = () => {
+    if (!backup) return
+    if (!confirm('드라이브에 있는 백업을 삭제할까요?\n삭제하면 되돌릴 수 없어요. 이 기기의 서재는 그대로예요.')) return
+    run('delete', async () => {
+      await deleteBackup(backup.id)
+      await loadInfo()
+      setMessage({ text: '드라이브 백업을 삭제했어요.' })
+    })
+  }
+
   let status = '연결 전'
   if (signedIn) {
     if (backup === undefined) status = '확인 중…'
@@ -132,11 +143,21 @@ export function BackupDialog({ onClose, onRestored }: BackupDialogProps) {
                   </button>
                 )}
               </div>
+              {backup && (
+                <button className="row action danger" onClick={remove} disabled={!!busy}>
+                  <span className="row-label">
+                    <span className="chip chip-peach">
+                      <TrashIcon />
+                    </span>
+                    {busy === 'delete' ? '삭제하는 중…' : '드라이브 백업 삭제'}
+                  </span>
+                </button>
+              )}
             </div>
 
             <p className="backup-note">
               작품, 편 내용, 표지, 읽은 위치가 파일 하나로 저장돼요. 앱 전용 공간이라 드라이브 목록에는 보이지 않아요.{' '}
-              <a href={PRIVACY_URL} target="_blank" rel="noopener">
+              <a href={PRIVACY_URL}>
                 개인정보처리방침
               </a>
             </p>

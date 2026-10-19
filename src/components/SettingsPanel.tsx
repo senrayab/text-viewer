@@ -13,6 +13,26 @@ import {
   WrapIcon,
 } from './Icons'
 
+/** 패널 스크롤 위치 — 개인정보처리방침에 다녀오거나 새로고침해도 같은 자리를 보여준다 */
+const SCROLL_KEY = 'text-viewer:panel-scroll'
+
+function readScroll() {
+  try {
+    return Number(sessionStorage.getItem(SCROLL_KEY)) || 0
+  } catch {
+    return 0
+  }
+}
+
+function rememberScroll(top: number | null) {
+  try {
+    if (top === null) sessionStorage.removeItem(SCROLL_KEY)
+    else sessionStorage.setItem(SCROLL_KEY, String(Math.round(top)))
+  } catch {
+    // 무시
+  }
+}
+
 interface SettingsPanelProps {
   settings: Settings
   onChange: <K extends keyof Settings>(key: K, value: Settings[K]) => void
@@ -129,6 +149,13 @@ function Toggle({
 
 export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: SettingsPanelProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const initialScroll = useRef(readScroll())
+
+  // 열릴 때 지난 스크롤 위치로, 닫힐 때(페이지를 떠나는 것 말고 패널을 닫을 때) 기억을 지운다
+  useEffect(() => {
+    if (ref.current) ref.current.scrollTop = initialScroll.current
+    return () => rememberScroll(null)
+  }, [])
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -143,7 +170,7 @@ export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: Set
   const fontStack = FONTS.find((f) => f.value === settings.font)!.stack
 
   return (
-    <div className="panel" ref={ref}>
+    <div className="panel" ref={ref} onScroll={(e) => rememberScroll(e.currentTarget.scrollTop)}>
       <header className="panel-head">
         <h2>보기 설정</h2>
         <p>편하게 읽을 수 있도록 맞춰보세요</p>
@@ -252,7 +279,7 @@ export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: Set
         </div>
       </Section>
 
-      <a className="panel-foot" href={PRIVACY_URL} target="_blank" rel="noopener">
+      <a className="panel-foot" href={PRIVACY_URL}>
         개인정보처리방침
       </a>
     </div>

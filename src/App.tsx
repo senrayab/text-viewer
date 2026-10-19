@@ -72,6 +72,8 @@ type View = { name: 'home' } | { name: 'library' } | { name: 'work'; workId: str
 interface SessionState {
   view: View
   episodeId?: string
+  /** 열려 있던 패널 — 개인정보처리방침에 다녀오거나 새로고침해도 그대로 다시 연다 */
+  panel?: 'settings' | 'backup'
 }
 
 const ACCEPT = '.txt,.text,.log,text/plain'
@@ -102,8 +104,8 @@ export default function App() {
   const charCount = useMemo(() => lines.reduce((n, l) => n + l.length, 0), [lines])
 
   // ── UI 상태 ───────────────────────────────────────────
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [backupOpen, setBackupOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(() => loadSessionState<SessionState>()?.panel === 'settings')
+  const [backupOpen, setBackupOpen] = useState(() => loadSessionState<SessionState>()?.panel === 'backup')
   const [searchOpen, setSearchOpen] = useState(false)
   const [gotoOpen, setGotoOpen] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
@@ -198,8 +200,9 @@ export default function App() {
   }, [doc, view])
 
   useEffect(() => {
-    saveSessionState({ view, episodeId: doc?.episode?.id } satisfies SessionState)
-  }, [view, doc])
+    const panel = settingsOpen ? 'settings' : backupOpen ? 'backup' : undefined
+    saveSessionState({ view, episodeId: doc?.episode?.id, panel } satisfies SessionState)
+  }, [view, doc, settingsOpen, backupOpen])
 
   const openEpisode = useCallback(
     async (episode: Episode) => {
