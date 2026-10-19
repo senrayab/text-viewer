@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>이용약관 — Text Viewer</title>
+    <meta name="description" content="Text Viewer 이용약관" />
+    <link rel="icon" href="../icon-192.png" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css"
+    />
+    <script>
+      // 앱에서 고른 테마를 이 화면에도 그대로 쓴다
+      try {
+        var t = JSON.parse(localStorage.getItem('text-viewer:settings') || '{}').theme || 'system'
+        if (t === 'system') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
+    <style>
+      :root,
+      [data-theme='light'] {
+        --bg: #f3f4f6;
+        --fg: #1f2328;
+        --muted: #7d848d;
+        --border: #e5e7eb;
+        --soft: #eceef1;
+        --link: #1f2328;
+        color-scheme: light;
+      }
+      [data-theme='sepia'] {
+        --bg: #f3ecdc;
+        --fg: #3f3226;
+        --muted: #8d7d63;
+        --border: #e6dbc1;
+        --soft: #ede3cc;
+        --link: #3f3226;
+        color-scheme: light;
+      }
+      [data-theme='dark'] {
+        --bg: #111315;
+        --fg: #e4e6e8;
+        --muted: #8b929a;
+        --border: #24282c;
+        --soft: #22262a;
+        --link: #e4e6e8;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: 'Pretendard Variable', Pretendard, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+        font-size: 14px;
+        line-height: 1.75;
+        letter-spacing: -0.015em;
+        word-break: keep-all;
+        overflow-wrap: anywhere;
+        -webkit-font-smoothing: antialiased;
+        -webkit-tap-highlight-color: transparent;
+      }
+      header.top {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        height: 52px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+      }
+      header.top a {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        color: var(--muted);
+      }
+      header.top a:hover {
+        background: var(--soft);
+        color: var(--fg);
+      }
+      header.top span {
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+      }
+      main {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 24px 20px 72px;
+      }
+      .dates {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .dates.last {
+        margin-top: 36px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+      }
+      h2 {
+        margin: 36px 0 10px;
+        font-size: 16px;
+        letter-spacing: -0.03em;
+      }
+      h3 {
+        margin: 22px 0 6px;
+        font-size: 14px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      ul {
+        margin: 0 0 12px;
+        padding-left: 18px;
+      }
+      li {
+        margin-bottom: 6px;
+      }
+      a {
+        color: var(--link);
+        text-underline-offset: 3px;
+      }
+      .table {
+        overflow-x: auto;
+        margin: 0 0 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th,
+      td {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: var(--soft);
+        font-weight: 600;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      .note {
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: var(--soft);
+        font-size: 13px;
+      }
+      dl.contact {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 6px 16px;
+        margin: 0 0 12px;
+      }
+      dl.contact dt {
+        color: var(--muted);
+      }
+      dl.contact dd {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <a
+        href="../"
+        aria-label="Text Viewer로 돌아가기"
+        onclick="if (document.referrer.indexOf(location.origin) === 0 && history.length > 1) { history.back(); return false }"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+      </a>
+      <span>이용약관</span>
+    </header>
+
+    <main>
+      <p>
+        이 약관은 <strong>Text Viewer(텍스트 뷰어)</strong>(이하 “서비스”)의 이용과 관련해 서비스 운영자와 이용자 사이의 권리,
+        의무와 책임을 정합니다.
+      </p>
+
+      <h2>제1조 (목적)</h2>
+      <p>
+        이 약관은 서비스가 제공하는 텍스트 파일 읽기와 서재 보관 기능의 이용 조건과 절차, 운영자와 이용자의 권리·의무, 책임을
+        정합니다.
+      </p>
+
+      <h2>제2조 (용어의 정의)</h2>
+      <ul>
+        <li>
+          <strong>서비스</strong> — 텍스트 파일 열기와 읽기, 내 서재에 작품 보관, 읽던 위치 기억, 구글 드라이브 백업·불러오기 등 이 앱이
+          제공하는 기능을 말합니다.
+        </li>
+        <li><strong>이용자</strong> — 이 약관에 따라 서비스를 쓰는 모든 사람을 말합니다.</li>
+        <li>
+          <strong>이용자 데이터</strong> — 이용자가 열거나 서재에 담은 텍스트 파일의 내용과 이름, 작품 이름·편 정보·표지 이미지, 읽던
+          위치와 진행률, 보기 설정 등을 말합니다.
+        </li>
+        <li><strong>백업 파일</strong> — 서재를 파일 하나로 묶어 이용자의 구글 드라이브에 저장한 파일을 말합니다.</li>
+      </ul>
+
+      <h2>제3조 (약관의 효력과 변경)</h2>
+      <ul>
+        <li>이 약관은 서비스 안에 게시함으로써 효력이 생깁니다.</li>
+        <li>운영자는 관련 법령을 어기지 않는 범위에서 약관을 바꿀 수 있습니다.</li>
+        <li>약관을 바꾸면 바뀐 내용과 시행일을 서비스 안에 게시합니다.</li>
+        <li>바뀐 약관에 동의하지 않는 이용자는 서비스 이용을 그만둘 수 있습니다.</li>
+      </ul>
+
+      <h2>제4조 (서비스의 제공)</h2>
+      <p>서비스는 아래 기능을 제공할 수 있습니다.</p>
+      <ul>
+        <li>텍스트 파일 열기와 인코딩(UTF-8·EUC-KR·UTF-16 등) 자동 판별</li>
+        <li>테마·글꼴·글자 크기·줄 간격·본문 폭 등 보기 설정, 검색, 줄 이동, 집중 모드</li>
+        <li>파일별로 읽던 위치 기억과 최근 문서 다시 열기</li>
+        <li>내 서재에 작품 담기, 파일 이름으로 여러 편을 한 작품으로 묶기, 표지 이미지 등록</li>
+        <li>편별 진행률 표시와 이어 읽기</li>
+        <li>구글 드라이브를 통한 선택적 백업·불러오기</li>
+        <li>그 밖에 운영자가 제공하는 기능</li>
+      </ul>
+      <p>서비스의 기능과 제공 방식은 운영 상황에 따라 바뀔 수 있습니다.</p>
+
+      <h2>제5조 (회원가입과 개인정보)</h2>
+      <ul>
+        <li>서비스는 회원가입이나 로그인 없이 쓸 수 있습니다.</li>
+        <li>이용자 데이터는 원칙적으로 이용자의 브라우저 또는 기기의 저장공간에 저장됩니다.</li>
+        <li>운영자는 이용자가 연 파일과 서재의 내용을 서버에 저장하거나 열람하지 않습니다.</li>
+        <li>
+          다만 서비스 호스팅, 글꼴 제공, 구글 드라이브 백업·불러오기 등 이용자가 고른 기능에 따라 외부 서비스와 통신이 일어날 수
+          있습니다.
+        </li>
+        <li>개인정보 처리에 관한 자세한 내용은 <a href="../privacy/index.html">개인정보처리방침</a>을 따릅니다.</li>
+      </ul>
+
+      <h2>제6조 (데이터 저장과 백업 책임)</h2>
+      <ul>
+        <li>이용자는 자신이 열거나 서재에 담은 데이터의 관리와 백업에 책임을 집니다.</li>
+        <li>
+          이용자 데이터는 브라우저와 사이트 주소마다 따로 있는 저장공간에 저장되므로, 브라우저나 기기를 바꿔도 자동으로 동기화되지
+          않습니다.
+        </li>
+        <li>
+          브라우저 데이터 삭제, 기기 변경·초기화, 저장공간 정리나 오류 등으로 데이터가 지워지거나 쓸 수 없게 될 수 있습니다. 아이폰
+          Safari에서는 사이트를 한동안 방문하지 않으면 브라우저가 저장공간을 지울 수 있으므로 홈 화면에 추가해 쓰기를 권합니다.
+        </li>
+        <li>데이터 손실을 막기 위해 서비스의 백업 기능으로 서재를 따로 보관해 두기를 권합니다.</li>
+        <li>
+          운영자는 이용자의 기기에 저장된 데이터에 접근할 수 없으므로, 지워지거나 손실된 데이터의 복구를 보장하지 않습니다. 서비스는
+          이용자의 원본 텍스트 파일을 바꾸거나 지우지 않습니다.
+        </li>
+      </ul>
+
+      <h2>제7조 (구글 드라이브 백업과 불러오기)</h2>
+      <ul>
+        <li>이용자는 구글 드라이브 백업·불러오기 기능을 선택해 쓸 수 있습니다.</li>
+        <li>이 기능은 이용자가 구글 계정 인증과 접근 권한을 승인한 경우에만 작동합니다.</li>
+        <li>
+          백업을 쓰면 서재 전체(작품 이름, 편 정보와 내용, 표지 이미지, 읽던 위치)가 파일 하나로 묶여 이용자 본인 구글 드라이브의 앱
+          전용 공간에 저장됩니다. 다시 백업하면 같은 파일을 덮어씁니다.
+        </li>
+        <li>
+          불러오기를 쓰면 백업 파일을 내려받아 이 기기의 서재를 <strong>백업 내용으로 바꿉니다</strong>. 이 기기의 서재에만 있던 작품은
+          사라지므로, 불러오기 전에 확인 창으로 한 번 더 묻습니다. 읽던 위치는 더 최근 기록을 남기며 합칩니다.
+        </li>
+        <li>
+          드라이브 접근 범위는 이용자가 승인한 권한(<code>drive.appdata</code>)을 따릅니다. 이 권한으로 닿는 것은 이 앱만 쓰는 숨겨진
+          공간뿐이며, 이용자 드라이브의 다른 파일과 폴더에는 닿지 않습니다.
+        </li>
+        <li>운영자는 구글 드라이브의 백업 파일을 서버에 저장하거나 열람하지 않습니다.</li>
+        <li>
+          백업 파일은 서비스의 백업 화면에서 “드라이브 백업 삭제”로 지우거나, 구글 드라이브 웹의 앱 관리에서 “숨겨진 앱 데이터
+          삭제”로 지울 수 있습니다. 백업 파일의 관리와 삭제는 이용자가 직접 합니다.
+        </li>
+        <li>
+          접근 토큰은 기기에 저장하지 않으며, 다음에 계정을 다시 묻지 않도록 연결한 계정의 이메일 주소만 이용자 브라우저에 저장합니다.
+          앱을 닫거나 새로고침하면 연결이 풀리고, 다음에 쓸 때 같은 계정으로 토큰을 새로 받습니다.
+        </li>
+        <li>
+          이용자는 백업 화면의 “연결 해제”나 구글 계정 설정에서 접근 권한을 철회할 수 있습니다. 권한을 철회해도 이미 저장된 백업 파일은
+          자동으로 지워지지 않습니다.
+        </li>
+        <li>구글 계정이나 드라이브의 이용 조건, 장애, 권한 변경 등에 따라 이 기능이 제한될 수 있습니다.</li>
+      </ul>
+
+      <h2>제8조 (텍스트 파일과 콘텐츠)</h2>
+      <ul>
+        <li>
+          이용자가 열거나 서재에 담는 텍스트 파일과 표지 이미지의 권리는 원칙적으로 그 콘텐츠의 권리자에게 있습니다.
+        </li>
+        <li>
+          이용자는 자신이 여는 콘텐츠에 대해 적법한 이용 권한을 가져야 하며, 서비스는 이용자가 정당하게 가진 파일을 개인적으로 읽고
+          보관하는 용도로 제공됩니다.
+        </li>
+        <li>
+          서비스는 이용자가 연 콘텐츠를 다른 사람에게 보내거나 공개하는 기능을 제공하지 않으며, 이용자의 콘텐츠를 검토하거나 관리하지
+          않습니다.
+        </li>
+      </ul>
+
+      <h2>제9조 (이용자의 의무)</h2>
+      <p>이용자는 아래 행위를 해서는 안 됩니다.</p>
+      <ul>
+        <li>관련 법령을 어기는 행위</li>
+        <li>타인의 저작권, 개인정보 등 권리를 침해하는 행위</li>
+        <li>서비스의 정상적인 운영을 방해하는 행위</li>
+        <li>서비스의 소스코드, 디자인 또는 시스템을 무단으로 복제·변경·배포하는 행위</li>
+        <li>서비스를 변조해 배포하거나 운영자를 사칭하는 행위</li>
+        <li>그 밖에 위법하거나 부당한 행위</li>
+      </ul>
+
+      <h2>제10조 (저작권과 지식재산권)</h2>
+      <ul>
+        <li>
+          서비스명, 디자인, UI, 소스코드와 운영자가 만든 콘텐츠의 권리는 그 권리자에게 있으며, 운영자의 허락 없이 복제·변경·배포할 수
+          없습니다.
+        </li>
+        <li>
+          서비스에 포함된 제3자 구성 요소(Pretendard·Tossface·Noto Serif KR·JetBrains Mono 글꼴, Lucide 아이콘, 라이브러리 등)는 각자의
+          라이선스를 따릅니다.
+        </li>
+        <li>이용자는 운영자나 제3자의 권리를 침해하는 방식으로 서비스나 콘텐츠를 써서는 안 됩니다.</li>
+      </ul>
+
+      <h2>제11조 (서비스의 변경과 중단)</h2>
+      <ul>
+        <li>운영자는 서비스의 기능, 디자인, 제공 방식을 바꿀 수 있습니다.</li>
+        <li>
+          점검, 유지보수, 호스팅 장애, 보안 문제, 천재지변 등 불가피한 사유가 있으면 서비스의 전부 또는 일부가 중단될 수 있습니다.
+        </li>
+        <li>운영자는 가능한 경우 서비스 변경이나 중단을 미리 안내합니다.</li>
+        <li>서비스의 변경이나 중단은 데이터 이용에 영향을 줄 수 있으므로, 중요한 서재는 따로 백업해 두기를 권합니다.</li>
+      </ul>
+
+      <h2>제12조 (서비스 이용의 제한)</h2>
+      <p>
+        이용자가 관련 법령이나 이 약관을 어기거나 서비스 운영을 크게 방해하는 경우, 운영자는 그 행위에 대해 필요한 조치를 할 수
+        있습니다.
+      </p>
+
+      <h2>제13조 (책임과 면책)</h2>
+      <ul>
+        <li>운영자는 이용자가 브라우저나 기기에 저장한 데이터의 영구 보존을 보장하지 않습니다.</li>
+        <li>
+          이용자의 사유로 인한 데이터 삭제, 브라우저·기기 변경, 초기화, 백업 내용으로 서재를 바꾸는 불러오기 등으로 생긴 데이터 손실의
+          책임은 관련 법령에 따라 정해집니다.
+        </li>
+        <li>이용자가 연 콘텐츠의 권리 문제로 생긴 분쟁의 책임은 관련 법령과 구체적인 사정에 따라 정해집니다.</li>
+        <li>GitHub Pages 호스팅, 글꼴 제공, 구글 드라이브 등 외부 서비스의 장애나 정책 변경으로 기능이 제한될 수 있습니다.</li>
+        <li>이 조항은 운영자의 고의나 과실에 대한 법적 책임, 관련 법령상 배제할 수 없는 책임을 제한하지 않습니다.</li>
+      </ul>
+
+      <h2>제14조 (준거법과 분쟁 해결)</h2>
+      <ul>
+        <li>이 약관은 대한민국 법률에 따라 해석되고 적용됩니다.</li>
+        <li>서비스 이용과 관련해 분쟁이 생기면 당사자는 서로 협의해 해결하도록 노력합니다.</li>
+        <li>협의로 해결되지 않는 분쟁은 관련 법령에 따른 절차로 해결합니다.</li>
+      </ul>
+
+      <h2>제15조 (문의)</h2>
+      <dl class="contact">
+        <dt>서비스명</dt>
+        <dd>Text Viewer(텍스트 뷰어)</dd>
+        <dt>운영자</dt>
+        <dd>센나</dd>
+        <dt>문의 이메일</dt>
+        <dd><a href="mailto:nljae@naver.com">nljae@naver.com</a></dd>
+      </dl>
+
+      <p class="dates last">
+        부칙 · 시행일 2026-10-19 · 최종 수정일 2026-10-19 · <a href="../privacy/index.html">개인정보처리방침</a>
+      </p>
+    </main>
+  </body>
+</html>

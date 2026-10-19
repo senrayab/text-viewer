@@ -167,13 +167,13 @@ export function BackupDialog({ onClose, onRestored, autoAuth }: BackupDialogProp
           <p className="backup-note">구글 드라이브 연결 설정이 아직 안 됐어요.</p>
         ) : (
           <>
-            <div className="card">
-              <div className="row">
-                <span className="row-label">
-                  <span className="chip chip-lavender">
-                    <AccountIcon />
+            <div className="opt-list">
+              <div className="opt">
+                <span className="opt-main">
+                  <span className="opt-icon">
+                    <AccountIcon size={18} />
                   </span>
-                  계정
+                  <span className="opt-title">계정</span>
                 </span>
                 {account ? (
                   <span className="backup-account">
@@ -194,22 +194,25 @@ export function BackupDialog({ onClose, onRestored, autoAuth }: BackupDialogProp
                   </button>
                 )}
               </div>
-              <div className="row">
-                <span className="row-label">
-                  <span className="chip chip-sky">
-                    <CloudIcon />
+              <div className="opt">
+                <span className="opt-main">
+                  <span className="opt-icon">
+                    <CloudIcon size={18} />
                   </span>
-                  마지막 백업
+                  <span className="opt-title">마지막 백업</span>
                 </span>
                 <span className="backup-status">{status}</span>
               </div>
               {backup && (
-                <button className="row action danger" onClick={remove} disabled={!!busy}>
-                  <span className="row-label">
-                    <span className="chip chip-peach">
-                      <TrashIcon />
+                <button className="opt opt-link danger" onClick={remove} disabled={!!busy}>
+                  <span className="opt-main">
+                    <span className="opt-icon">
+                      <TrashIcon size={18} />
                     </span>
-                    {busy === 'delete' ? '삭제하는 중…' : '드라이브 백업 삭제'}
+                    <span className="opt-text">
+                      <span className="opt-title">{busy === 'delete' ? '삭제하는 중…' : '드라이브 백업 삭제'}</span>
+                      <span className="opt-desc">이 기기의 서재는 그대로 남아요</span>
+                    </span>
                   </span>
                 </button>
               )}

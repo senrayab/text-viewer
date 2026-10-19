@@ -307,7 +307,8 @@ export function continueEpisode(
 
 export function episodeStatus(position?: Position) {
   const progress = position?.progress
-  if (progress === undefined) return { label: '읽기 전', percent: 0, started: false, finished: false }
+  // 읽기 전도 막대와 같은 0%로 보여준다 (서재·목록 모두 막대+퍼센트로 통일)
+  if (progress === undefined) return { label: '0%', percent: 0, started: false, finished: false }
   if (progress >= FINISHED) return { label: '100%', percent: 100, started: true, finished: true }
   const percent = Math.round(progress * 100)
   return { label: `${percent}%`, percent, started: true, finished: false }

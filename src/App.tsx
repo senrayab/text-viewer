@@ -107,6 +107,8 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(() => loadSessionState<SessionState>()?.panel === 'settings')
   const [backupOpen, setBackupOpen] = useState(() => loadSessionState<SessionState>()?.panel === 'backup')
   const [backupAuth, setBackupAuth] = useState<Promise<string>>()
+  /** 백업 화면을 닫으면 보기 설정으로 돌아간다 — 그때 보여줄 설정 스크롤 위치 */
+  const [settingsReturnScroll, setSettingsReturnScroll] = useState<number>()
   /** 휴대폰 읽기 화면의 ⋯ 메뉴 */
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -552,7 +554,10 @@ export default function App() {
     scrollerRef.current?.focus({ preventScroll: true })
   }, [])
 
-  const closeSettings = useCallback(() => setSettingsOpen(false), [])
+  const closeSettings = useCallback(() => {
+    setSettingsOpen(false)
+    setSettingsReturnScroll(undefined)
+  }, [])
 
   const toggleFocus = useCallback(() => {
     setFocusMode((on) => {
@@ -849,7 +854,9 @@ export default function App() {
             settings={settings}
             onChange={updateSetting}
             onClose={closeSettings}
-            onOpenBackup={() => {
+            initialScrollTop={settingsReturnScroll}
+            onOpenBackup={(scrollTop) => {
+              setSettingsReturnScroll(scrollTop)
               // 연결한 적 있는 계정이면 이 클릭에서 바로 조용히 다시 연결한다
               const reconnect = connectedAccount() !== null && !isSignedIn() && !!window.google?.accounts?.oauth2
               setBackupAuth(reconnect ? signIn() : undefined)
@@ -914,11 +921,15 @@ export default function App() {
         <BackupDialog
           autoAuth={backupAuth}
           onClose={() => {
+            // 백업은 보기 설정에서 들어오므로, 닫으면 보던 설정 화면으로 돌아간다
             setBackupOpen(false)
             setBackupAuth(undefined)
+            setSettingsOpen(true)
           }}
           onRestored={async ({ works, episodes }) => {
+            // 불러오기가 끝나면 설정으로 돌아가지 않고 바뀐 서재를 바로 보여준다
             setBackupOpen(false)
+            setSettingsReturnScroll(undefined)
             await refreshLibrary()
             setPositions(readPositions())
             showToast(`백업에서 작품 ${works}개, ${episodes}편을 불러왔어요.`, 2600)

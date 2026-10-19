@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
-import { PRIVACY_URL } from '../config'
+import { PRIVACY_URL, TERMS_URL } from '../config'
 import { connectedAccount, driveConfigured, preloadGoogle } from '../lib/drive'
 import { FONT_SIZE, FONTS, LINE_HEIGHT, THEMES, WIDTHS, clamp, type Settings } from '../settings'
 import {
@@ -39,16 +39,17 @@ interface SettingsPanelProps {
   settings: Settings
   onChange: <K extends keyof Settings>(key: K, value: Settings[K]) => void
   onClose: () => void
-  onOpenBackup: () => void
+  /** 백업 화면으로 넘어갈 때, 돌아올 자리를 위해 지금 스크롤 위치를 넘긴다 */
+  onOpenBackup: (scrollTop: number) => void
+  /** 백업 화면에서 돌아올 때 보여줄 스크롤 위치 */
+  initialScrollTop?: number
 }
 
-/** 항목 앞 아이콘 칩의 은은한 바탕색 */
-type Tone = 'lavender' | 'sky' | 'sage' | 'peach' | 'stone'
-
+/** 섹션: 작은 대문자 이름 아래 내용 */
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="section">
-      <h3>{title}</h3>
+    <section className="opt-section">
+      <h3 className="section-label">{title}</h3>
       {children}
     </section>
   )
@@ -74,27 +75,34 @@ function Segmented<T extends string>({
   )
 }
 
-function RowLabel({ icon, tone, children }: { icon: ReactNode; tone: Tone; children: ReactNode }) {
+/** 항목 왼쪽: 흐린 아이콘 + 제목과 그 아래 한 줄 설명 */
+function OptText({ icon, label, desc, hint }: { icon?: ReactNode; label: string; desc?: string; hint?: string }) {
   return (
-    <span className="row-label">
-      <span className={`chip chip-${tone}`}>{icon}</span>
-      {children}
+    <span className="opt-main">
+      {icon && <span className="opt-icon">{icon}</span>}
+      <span className="opt-text">
+        <span className="opt-title">
+          {label}
+          {hint && <kbd>{hint}</kbd>}
+        </span>
+        {desc && <span className="opt-desc">{desc}</span>}
+      </span>
     </span>
   )
 }
 
 function Stepper({
   icon,
-  tone,
   label,
+  desc,
   value,
   display,
   range,
   onChange,
 }: {
-  icon: ReactNode
-  tone: Tone
+  icon?: ReactNode
   label: string
+  desc?: string
   value: number
   display: string
   range: { min: number; max: number; step: number }
@@ -102,16 +110,14 @@ function Stepper({
 }) {
   const step = (dir: number) => onChange(clamp(Math.round((value + dir * range.step) * 10) / 10, range.min, range.max))
   return (
-    <div className="row">
-      <RowLabel icon={icon} tone={tone}>
-        {label}
-      </RowLabel>
+    <div className="opt">
+      <OptText icon={icon} label={label} desc={desc} />
       <div className="stepper">
-        <button className="icon-btn small" onClick={() => step(-1)} disabled={value <= range.min}>
+        <button className="icon-btn small" onClick={() => step(-1)} disabled={value <= range.min} title="줄이기">
           <MinusIcon />
         </button>
         <span className="value">{display}</span>
-        <button className="icon-btn small" onClick={() => step(1)} disabled={value >= range.max}>
+        <button className="icon-btn small" onClick={() => step(1)} disabled={value >= range.max} title="늘리기">
           <PlusIcon />
         </button>
       </div>
@@ -121,24 +127,22 @@ function Stepper({
 
 function Toggle({
   icon,
-  tone,
   label,
+  desc,
   hint,
   checked,
   onChange,
 }: {
-  icon: ReactNode
-  tone: Tone
+  icon?: ReactNode
   label: string
+  desc?: string
   hint?: string
   checked: boolean
   onChange: (v: boolean) => void
 }) {
   return (
-    <label className="row">
-      <RowLabel icon={icon} tone={tone}>
-        {label} {hint && <kbd>{hint}</kbd>}
-      </RowLabel>
+    <label className="opt">
+      <OptText icon={icon} label={label} desc={desc} hint={hint} />
       <button
         role="switch"
         aria-checked={checked}
@@ -149,9 +153,9 @@ function Toggle({
   )
 }
 
-export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: SettingsPanelProps) {
+export function SettingsPanel({ settings, onChange, onClose, onOpenBackup, initialScrollTop }: SettingsPanelProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const initialScroll = useRef(readScroll())
+  const initialScroll = useRef(initialScrollTop ?? readScroll())
 
   // 구글 드라이브를 연결한 적이 있으면, 백업 화면을 누르는 순간 조용히 다시 연결할 수 있도록 미리 불러 둔다
   useEffect(() => {
@@ -165,7 +169,11 @@ export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: Set
   }, [])
 
   useEffect(() => {
+    // 백업 화면 바깥을 눌러 닫으면 그 누름으로 이 패널이 다시 열리는데, 같은 누름을 "패널 바깥 누름"으로 보고
+    // 바로 닫지 않도록 열린 뒤에 시작된 누름만 본다
+    const openedAt = performance.now()
     const onDown = (e: MouseEvent) => {
+      if (e.timeStamp < openedAt) return
       const target = e.target as HTMLElement
       if (ref.current?.contains(target) || target.closest('[data-settings-toggle]')) return
       onClose()
@@ -196,7 +204,7 @@ export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: Set
         </p>
       </div>
 
-      <Section title="테마">
+      <Section title="Theme">
         <div className="tiles four">
           {THEMES.map((t) => (
             <button
@@ -211,7 +219,7 @@ export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: Set
         </div>
       </Section>
 
-      <Section title="글꼴">
+      <Section title="Font">
         <div className="tiles three">
           {FONTS.map((f) => (
             <button
@@ -228,42 +236,42 @@ export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: Set
         </div>
       </Section>
 
-      <Section title="본문 폭">
+      <Section title="Width">
         <Segmented options={WIDTHS} value={settings.width} onChange={(v) => onChange('width', v)} />
       </Section>
 
-      <Section title="읽기">
-        <div className="card">
+      <Section title="Reading">
+        <div className="opt-list">
           <Stepper
-            icon={<FontSizeIcon />}
-            tone="lavender"
+            icon={<FontSizeIcon size={18} />}
             label="글자 크기"
+            desc="본문 글자를 키우거나 줄여요"
             value={settings.fontSize}
             display={`${settings.fontSize}px`}
             range={FONT_SIZE}
             onChange={(v) => onChange('fontSize', v)}
           />
           <Stepper
-            icon={<LineHeightIcon />}
-            tone="sky"
+            icon={<LineHeightIcon size={18} />}
             label="줄 간격"
+            desc="줄 사이 여백을 넓히거나 좁혀요"
             value={settings.lineHeight}
             display={settings.lineHeight.toFixed(1)}
             range={LINE_HEIGHT}
             onChange={(v) => onChange('lineHeight', v)}
           />
           <Toggle
-            icon={<LineNumberIcon />}
-            tone="sage"
+            icon={<LineNumberIcon size={18} />}
             label="줄 번호"
+            desc="줄 앞에 번호를 붙여요"
             hint="L"
             checked={settings.lineNumbers}
             onChange={(v) => onChange('lineNumbers', v)}
           />
           <Toggle
-            icon={<WrapIcon />}
-            tone="peach"
+            icon={<WrapIcon size={18} />}
             label="자동 줄바꿈"
+            desc="긴 줄을 화면 폭에 맞춰 접어요"
             hint="W"
             checked={settings.wrap}
             onChange={(v) => onChange('wrap', v)}
@@ -271,19 +279,17 @@ export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: Set
         </div>
       </Section>
 
-      <Section title="기록">
-        <div className="card">
+      <Section title="Data">
+        <div className="opt-list">
           <Toggle
-            icon={<RecentIcon />}
-            tone="stone"
+            icon={<RecentIcon size={18} />}
             label="최근 문서 기억"
+            desc="처음 화면에서 마지막 문서를 다시 열 수 있어요"
             checked={settings.rememberRecent}
             onChange={(v) => onChange('rememberRecent', v)}
           />
-          <button className="row action" onClick={onOpenBackup}>
-            <RowLabel icon={<CloudIcon />} tone="sky">
-              구글 드라이브 백업
-            </RowLabel>
+          <button className="opt opt-link" onClick={() => onOpenBackup(ref.current?.scrollTop ?? 0)}>
+            <OptText icon={<CloudIcon size={18} />} label="구글 드라이브 백업" desc="서재를 드라이브에 보관하고 불러와요" />
             <span className="row-chevron">
               <ChevronIcon />
             </span>
@@ -291,9 +297,11 @@ export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: Set
         </div>
       </Section>
 
-      <a className="panel-foot" href={PRIVACY_URL}>
-        개인정보처리방침
-      </a>
+      <p className="panel-foot">
+        <a href={TERMS_URL}>이용약관</a>
+        <span aria-hidden>·</span>
+        <a href={PRIVACY_URL}>개인정보처리방침</a>
+      </p>
     </div>
   )
 }

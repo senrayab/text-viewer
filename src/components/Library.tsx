@@ -111,17 +111,13 @@ export function Library({ items, positions, onOpen, onDetail, onAdd }: LibraryPr
                               )}
                               <span>{s.work.title}</span>
                             </div>
-                            {/* 편수는 표지의 배지에 있으니, 여기는 읽은 정도만 한 줄로 */}
-                            {progress.started ? (
-                              <div className="book-progress">
-                                <span className="bar">
-                                  <span style={{ width: `${percent}%` }} />
-                                </span>
-                                <span className="book-pct">{percent}%</span>
-                              </div>
-                            ) : (
-                              <div className="book-sub">읽기 전</div>
-                            )}
+                            {/* 편수는 표지의 배지에 있으니, 여기는 읽은 정도만 한 줄로 (읽기 전이면 0%) */}
+                            <div className="book-progress">
+                              <span className="bar">
+                                <span style={{ width: `${percent}%` }} />
+                              </span>
+                              <span className="book-pct">{percent}%</span>
+                            </div>
                           </div>
                           <button className="icon-btn small" onClick={() => onDetail(s)} title="작품 정보">
                             <MoreIcon />

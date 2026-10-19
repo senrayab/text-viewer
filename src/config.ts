@@ -6,3 +6,6 @@ export const GOOGLE_CLIENT_ID = '224901494116-83min4vj5v1nj9i1jdd1hb3as153a7ar.a
 
 /** 개인정보처리방침 (public/privacy/index.html) */
 export const PRIVACY_URL = `${import.meta.env.BASE_URL}privacy/index.html`
+
+/** 이용약관 (public/terms/index.html) */
+export const TERMS_URL = `${import.meta.env.BASE_URL}terms/index.html`

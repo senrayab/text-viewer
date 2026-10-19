@@ -26,11 +26,11 @@ export function ReaderMenu({ items, onClose }: ReaderMenuProps) {
             <CloseIcon />
           </button>
         </header>
-        <div className="card">
+        <div className="opt-list">
           {items.map((item) => (
             <button
               key={item.label}
-              className="row action"
+              className="opt opt-link"
               role="menuitem"
               onClick={() => {
                 // 파일 열기 창은 누른 처리 안에서 바로 띄워야 하므로 닫기와 실행을 같은 처리에서 한다
@@ -38,11 +38,13 @@ export function ReaderMenu({ items, onClose }: ReaderMenuProps) {
                 item.onSelect()
               }}
             >
-              <span className="row-label">
-                <span className="chip chip-stone">{item.icon}</span>
-                {item.label}
+              <span className="opt-icon">{item.icon}</span>
+              <span className="opt-text">
+                <span className="opt-title">
+                  {item.label}
+                  {item.hint && <kbd>{item.hint}</kbd>}
+                </span>
               </span>
-              {item.hint && <kbd>{item.hint}</kbd>}
             </button>
           ))}
         </div>

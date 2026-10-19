@@ -11,11 +11,8 @@ import type { Position } from '../lib/storage'
 import { Cover, workHue } from './Cover'
 import {
   BookIcon,
-  CoverIcon,
-  CoverRemoveIcon,
   DoneIcon,
   EditIcon,
-  PlusIcon,
   ReadingIcon,
   SortIcon,
   TrashIcon,
@@ -139,6 +136,7 @@ export function WorkDetail({
             ) : (
               <h1 className="display">{work.title}</h1>
             )}
+            {/* 아직 한 편도 안 읽었으면 막대 대신 아래 설명의 "읽기 전"만 보여준다 */}
             {progress.started && (
               <div className="book-progress work-progress">
                 <span className="bar">
@@ -168,13 +166,11 @@ export function WorkDetail({
         </header>
 
         {editing && (
-          <div className="card actions-card">
-            <label className="row action">
-              <span className="row-label">
-                <span className="chip chip-lavender">
-                  <CoverIcon />
-                </span>
-                표지 이미지 {work.cover ? '바꾸기' : '등록'}
+          <div className="opt-list edit-list">
+            <label className="opt opt-link">
+              <span className="opt-text">
+                <span className="opt-title">표지 이미지 {work.cover ? '바꾸기' : '등록'}</span>
+                <span className="opt-desc">사진이나 이미지를 표지로 써요</span>
               </span>
               <input
                 type="file"
@@ -188,29 +184,23 @@ export function WorkDetail({
               />
             </label>
             {work.cover && (
-              <button className="row action" onClick={() => onCover(null)}>
-                <span className="row-label">
-                  <span className="chip chip-stone">
-                    <CoverRemoveIcon />
-                  </span>
-                  표지 이미지 지우기
+              <button className="opt opt-link" onClick={() => onCover(null)}>
+                <span className="opt-text">
+                  <span className="opt-title">표지 이미지 지우기</span>
+                  <span className="opt-desc">제목으로 만든 표지로 돌아가요</span>
                 </span>
               </button>
             )}
-            <button className="row action" onClick={onAddEpisodes}>
-              <span className="row-label">
-                <span className="chip chip-sage">
-                  <PlusIcon />
-                </span>
-                편 추가하기
+            <button className="opt opt-link" onClick={onAddEpisodes}>
+              <span className="opt-text">
+                <span className="opt-title">편 추가하기</span>
+                <span className="opt-desc">이 작품에 txt 파일을 더 담아요</span>
               </span>
             </button>
-            <button className="row action danger" onClick={onDeleteWork}>
-              <span className="row-label">
-                <span className="chip chip-peach">
-                  <TrashIcon />
-                </span>
-                작품 삭제
+            <button className="opt opt-link danger" onClick={onDeleteWork}>
+              <span className="opt-text">
+                <span className="opt-title">작품 삭제</span>
+                <span className="opt-desc">이 작품과 모든 편을 서재에서 지워요</span>
               </span>
             </button>
           </div>

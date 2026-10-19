@@ -8,7 +8,7 @@ export function InstallHint() {
 
   return (
     <div className="hint-card">
-      <span className="chip chip-sky">
+      <span className="hint-icon">
         <PhoneIcon />
       </span>
       <div className="hint-body">
