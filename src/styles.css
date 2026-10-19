@@ -1860,7 +1860,6 @@ select.text-input {
   color: var(--muted);
 }
 
-.backup-note a,
 .panel-foot {
   color: var(--muted);
   text-underline-offset: 3px;

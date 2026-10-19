@@ -258,9 +258,17 @@ export async function listLibrary(): Promise<WorkSummary[]> {
         const coverHue = await extractHue(w.cover!).catch(() => undefined)
         if (coverHue === undefined) return
         w.coverHue = coverHue
-        updateWork(w.id, { coverHue }).catch(() => {})
+        patchWork(w.id, { coverHue }).catch(() => {})
       }),
   )
+  // 예전에 크게 저장된 표지는 줄여서 다시 저장한다 (화면은 다음에 열 때부터 작은 표지를 쓴다)
+  for (const w of works) {
+    if (!w.cover || w.cover.size <= COVER_SHRINK_BYTES) continue
+    const original = w.cover
+    prepareCover(original)
+      .then((cover) => (cover.size < original.size ? patchWork(w.id, { cover }) : undefined))
+      .catch(() => {})
+  }
   return works.map((work) => ({ work, episodes: sortEpisodes(byWork.get(work.id) ?? []) }))
 }
 
@@ -393,6 +401,16 @@ export async function addToLibrary(groups: PendingGroup[]) {
 
 type WorkChanges = Partial<Pick<Work, 'title' | 'cover' | 'coverHue'>>
 
+/** 표지 색·크기처럼 앱이 알아서 고쳐 두는 값. 이용자가 작품을 고친 것은 아니므로 수정 시각은 그대로 둔다 */
+async function patchWork(id: string, changes: Pick<Work, 'cover'> | Pick<Work, 'coverHue'>) {
+  const db = await openDb()
+  const tx = db.transaction('works', 'readwrite')
+  const store = tx.objectStore('works')
+  const work = await request<Work | undefined>(store.get(id))
+  if (work) store.put({ ...work, ...changes })
+  await done(tx)
+}
+
 export async function updateWork(id: string, changes: WorkChanges) {
   const db = await openDb()
   const tx = db.transaction('works', 'readwrite')
@@ -469,16 +487,32 @@ export async function deleteWork(id: string) {
   await done(tx)
 }
 
-/** 표지 이미지는 저장 공간을 아끼도록 줄여서 저장한다 */
-export async function prepareCover(file: File, maxWidth = 600): Promise<Blob> {
+// 표지는 가장 크게 보여도 폭 160px 남짓이라, 고해상도 화면(3배)에서도 이 크기면 충분하다
+const COVER_MAX_WIDTH = 480
+const COVER_MAX_HEIGHT = 720
+// 이보다 큰 표지는 예전 방식으로 저장된 것으로 보고 서재를 열 때 한 번 줄여 둔다
+const COVER_SHRINK_BYTES = 150 * 1024
+
+function encode(canvas: HTMLCanvasElement, type: string, quality: number) {
+  return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality))
+}
+
+/** 표지 이미지는 저장 공간을 아끼도록 줄이고 WebP로(지원하지 않는 브라우저는 JPEG로) 바꿔 저장한다 */
+export async function prepareCover(file: Blob): Promise<Blob> {
   const bitmap = await createImageBitmap(file)
-  const scale = Math.min(1, maxWidth / bitmap.width)
+  const scale = Math.min(1, COVER_MAX_WIDTH / bitmap.width, COVER_MAX_HEIGHT / bitmap.height)
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(bitmap.width * scale)
   canvas.height = Math.round(bitmap.height * scale)
-  canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  const ctx = canvas.getContext('2d')!
+  // 투명한 PNG가 JPEG로 바뀌면 검게 나오지 않도록 흰 바탕을 깐다
+  ctx.fillStyle = '#fff'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
   bitmap.close()
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('cover'))), 'image/jpeg', 0.85),
-  )
+  // WebP를 못 만드는 브라우저(예전 사파리)는 PNG를 돌려주므로 그때는 JPEG로 다시 만든다
+  const webp = await encode(canvas, 'image/webp', 0.8)
+  const blob = webp?.type === 'image/webp' ? webp : await encode(canvas, 'image/jpeg', 0.82)
+  if (!blob) throw new Error('cover')
+  return blob
 }

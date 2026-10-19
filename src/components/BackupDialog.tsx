@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { PRIVACY_URL } from '../config'
 import { createBackup, restoreBackup, type BackupSummary } from '../lib/backup'
 import {
   connectedAccount,
@@ -219,10 +218,9 @@ export function BackupDialog({ onClose, onRestored, autoAuth }: BackupDialogProp
             </div>
 
             <p className="backup-note">
-              작품, 편 내용, 표지, 읽은 위치가 파일 하나로 저장돼요. 앱 전용 공간이라 드라이브 목록에는 보이지 않아요.{' '}
-              <a href={PRIVACY_URL}>
-                개인정보처리방침
-              </a>
+              작품, 편 내용, 표지, 읽은 위치가 파일 하나로 저장돼요.
+              <br />
+              앱 전용 공간이라 드라이브 목록에는 보이지 않아요.
             </p>
 
             {message && <p className={`backup-message${message.error ? ' error' : ''}`}>{message.text}</p>}

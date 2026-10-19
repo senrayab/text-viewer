@@ -10,7 +10,10 @@ import {
 import type { Position } from '../lib/storage'
 import { Cover, workHue } from './Cover'
 import {
+  AddIcon,
   BookIcon,
+  CoverIcon,
+  CoverRemoveIcon,
   DoneIcon,
   EditIcon,
   ReadingIcon,
@@ -168,9 +171,14 @@ export function WorkDetail({
         {editing && (
           <div className="opt-list edit-list">
             <label className="opt opt-link">
-              <span className="opt-text">
-                <span className="opt-title">표지 이미지 {work.cover ? '바꾸기' : '등록'}</span>
-                <span className="opt-desc">사진이나 이미지를 표지로 써요</span>
+              <span className="opt-main">
+                <span className="opt-icon">
+                  <CoverIcon />
+                </span>
+                <span className="opt-text">
+                  <span className="opt-title">표지 이미지 {work.cover ? '바꾸기' : '등록'}</span>
+                  <span className="opt-desc">사진이나 이미지를 표지로 써요</span>
+                </span>
               </span>
               <input
                 type="file"
@@ -185,22 +193,37 @@ export function WorkDetail({
             </label>
             {work.cover && (
               <button className="opt opt-link" onClick={() => onCover(null)}>
-                <span className="opt-text">
-                  <span className="opt-title">표지 이미지 지우기</span>
-                  <span className="opt-desc">제목으로 만든 표지로 돌아가요</span>
+                <span className="opt-main">
+                  <span className="opt-icon">
+                    <CoverRemoveIcon />
+                  </span>
+                  <span className="opt-text">
+                    <span className="opt-title">표지 이미지 지우기</span>
+                    <span className="opt-desc">제목으로 만든 표지로 돌아가요</span>
+                  </span>
                 </span>
               </button>
             )}
             <button className="opt opt-link" onClick={onAddEpisodes}>
-              <span className="opt-text">
-                <span className="opt-title">편 추가하기</span>
-                <span className="opt-desc">이 작품에 txt 파일을 더 담아요</span>
+              <span className="opt-main">
+                <span className="opt-icon">
+                  <AddIcon />
+                </span>
+                <span className="opt-text">
+                  <span className="opt-title">편 추가하기</span>
+                  <span className="opt-desc">이 작품에 txt 파일을 더 담아요</span>
+                </span>
               </span>
             </button>
             <button className="opt opt-link danger" onClick={onDeleteWork}>
-              <span className="opt-text">
-                <span className="opt-title">작품 삭제</span>
-                <span className="opt-desc">이 작품과 모든 편을 서재에서 지워요</span>
+              <span className="opt-main">
+                <span className="opt-icon">
+                  <TrashIcon />
+                </span>
+                <span className="opt-text">
+                  <span className="opt-title">작품 삭제</span>
+                  <span className="opt-desc">이 작품과 모든 편을 서재에서 지워요</span>
+                </span>
               </span>
             </button>
           </div>

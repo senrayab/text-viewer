@@ -16,6 +16,7 @@ import {
   Cloud,
   CircleUserRound,
   Ellipsis,
+  FilePlus,
   FileText,
   FolderOpen,
   History,
@@ -75,6 +76,7 @@ export const EditIcon = icon(Pencil, 16)
 export const TrashIcon = icon(Trash2, 16)
 export const CoverIcon = icon(ImagePlus, 16)
 export const CoverRemoveIcon = icon(ImageMinus, 16)
+export const AddIcon = icon(FilePlus, 16)
 export const NextIcon = icon(ChevronRight, 18)
 export const BookIcon = icon(BookOpen, 18)
 export const SortIcon = icon(ArrowDownUp, 14)
