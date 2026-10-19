@@ -78,6 +78,8 @@ interface SessionState {
 }
 
 const ACCEPT = '.txt,.text,.log,text/plain'
+// 설정 시트가 아래로 내려가며 닫히는 시간 (styles.css의 .panel.leaving과 같다)
+const SHEET_LEAVE_MS = 220
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings)
@@ -554,10 +556,18 @@ export default function App() {
     scrollerRef.current?.focus({ preventScroll: true })
   }, [])
 
-  const closeSettings = useCallback(() => {
-    setSettingsOpen(false)
-    setSettingsReturnScroll(undefined)
-  }, [])
+  // 닫을 때는 아래로 내려가는 움직임을 다 보여준 뒤에 패널을 치운다
+  const [settingsLeaving, setSettingsLeaving] = useState(false)
+  const closeSettings = useCallback(() => setSettingsLeaving(true), [])
+  useEffect(() => {
+    if (!settingsLeaving) return
+    const timer = setTimeout(() => {
+      setSettingsOpen(false)
+      setSettingsReturnScroll(undefined)
+      setSettingsLeaving(false)
+    }, SHEET_LEAVE_MS)
+    return () => clearTimeout(timer)
+  }, [settingsLeaving])
 
   const toggleFocus = useCallback(() => {
     setFocusMode((on) => {
@@ -590,7 +600,7 @@ export default function App() {
       }
       if (e.key === 'Escape') {
         if (menuOpen) setMenuOpen(false)
-        else if (settingsOpen) setSettingsOpen(false)
+        else if (settingsOpen) closeSettings()
         else if (searchOpen) closeSearch()
         else if (gotoOpen) closeGoto()
         else if (focusMode) setFocusMode(false)
@@ -622,6 +632,7 @@ export default function App() {
     doc,
     settings,
     settingsOpen,
+    closeSettings,
     menuOpen,
     searchOpen,
     gotoOpen,
@@ -754,7 +765,13 @@ export default function App() {
         )}
         <button
           className={`icon-btn round${settingsOpen ? ' on' : ''}`}
-          onClick={() => setSettingsOpen((v) => !v)}
+          onClick={() => {
+            if (settingsOpen && !settingsLeaving) closeSettings()
+            else {
+              setSettingsLeaving(false)
+              setSettingsOpen(true)
+            }
+          }}
           title="보기 설정"
           data-settings-toggle
         >
@@ -848,12 +865,13 @@ export default function App() {
           />
         )}
         {menuOpen && doc && <ReaderMenu items={readerMenuItems} onClose={() => setMenuOpen(false)} />}
-        {settingsOpen && <div className="sheet-backdrop" aria-hidden />}
+        {settingsOpen && <div className={`sheet-backdrop${settingsLeaving ? " leaving" : ""}`} aria-hidden />}
         {settingsOpen && (
           <SettingsPanel
             settings={settings}
             onChange={updateSetting}
             onClose={closeSettings}
+            leaving={settingsLeaving}
             initialScrollTop={settingsReturnScroll}
             onOpenBackup={(scrollTop) => {
               setSettingsReturnScroll(scrollTop)

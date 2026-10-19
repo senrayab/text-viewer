@@ -39,6 +39,8 @@ interface SettingsPanelProps {
   settings: Settings
   onChange: <K extends keyof Settings>(key: K, value: Settings[K]) => void
   onClose: () => void
+  /** 닫히는 중이면 아래로 내려가며 사라진다 */
+  leaving?: boolean
   /** 백업 화면으로 넘어갈 때, 돌아올 자리를 위해 지금 스크롤 위치를 넘긴다 */
   onOpenBackup: (scrollTop: number) => void
   /** 백업 화면에서 돌아올 때 보여줄 스크롤 위치 */
@@ -153,7 +155,7 @@ function Toggle({
   )
 }
 
-export function SettingsPanel({ settings, onChange, onClose, onOpenBackup, initialScrollTop }: SettingsPanelProps) {
+export function SettingsPanel({ settings, onChange, onClose, leaving, onOpenBackup, initialScrollTop }: SettingsPanelProps) {
   const ref = useRef<HTMLDivElement>(null)
   const initialScroll = useRef(initialScrollTop ?? readScroll())
 
@@ -185,7 +187,7 @@ export function SettingsPanel({ settings, onChange, onClose, onOpenBackup, initi
   const fontStack = FONTS.find((f) => f.value === settings.font)!.stack
 
   return (
-    <div className="panel" ref={ref} onScroll={(e) => rememberScroll(e.currentTarget.scrollTop)}>
+    <div className={`panel${leaving ? " leaving" : ""}`} ref={ref} onScroll={(e) => rememberScroll(e.currentTarget.scrollTop)}>
       <header className="sheet-head">
         <div>
           <span className="eyebrow">SETTINGS</span>

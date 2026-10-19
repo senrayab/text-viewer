@@ -180,7 +180,7 @@
       <a
         href="../"
         aria-label="Text Viewer로 돌아가기"
-        onclick="if (document.referrer.indexOf(location.origin) === 0 && history.length > 1) { history.back(); return false }"
+        onclick="return backToApp()"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
       </a>
@@ -243,7 +243,7 @@
           다만 서비스 호스팅, 글꼴 제공, 구글 드라이브 백업·불러오기 등 이용자가 고른 기능에 따라 외부 서비스와 통신이 일어날 수
           있습니다.
         </li>
-        <li>개인정보 처리에 관한 자세한 내용은 <a href="../privacy/index.html">개인정보처리방침</a>을 따릅니다.</li>
+        <li>개인정보 처리에 관한 자세한 내용은 <a href="../privacy/index.html" data-legal>개인정보처리방침</a>을 따릅니다.</li>
       </ul>
 
       <h2>제6조 (데이터 저장과 백업 책임)</h2>
@@ -381,8 +381,45 @@
       </dl>
 
       <p class="dates last">
-        부칙 · 시행일 2026-10-19 · 최종 수정일 2026-10-19 · <a href="../privacy/index.html">개인정보처리방침</a>
+        부칙 · 시행일 2026-10-19 · 최종 수정일 2026-10-19 · <a href="../privacy/index.html" data-legal>개인정보처리방침</a>
       </p>
     </main>
+    <script>
+      // 앱에서 들어온 뒤 약관·방침 사이를 몇 번 넘어왔는지 기억한다.
+      // 뒤로 버튼은 그만큼 한 번에 되돌아가, 문서끼리 오갔더라도 들어오기 전 앱 화면(보기 설정)으로 나간다.
+      ;(function () {
+        var KEY = 'text-viewer:legal-depth'
+        var state = history.state || {}
+        if (typeof state.legalDepth !== 'number') {
+          var pending = 0
+          try {
+            pending = Number(sessionStorage.getItem(KEY) || 0)
+          } catch (e) {}
+          // 문서 안 링크로 왔으면 그 값, 앱에서 왔으면 1, 링크로 바로 열었으면 0
+          var depth = pending || (document.referrer.indexOf(location.origin) === 0 ? 1 : 0)
+          state = Object.assign({}, state, { legalDepth: depth })
+          history.replaceState(state, '')
+        }
+        try {
+          sessionStorage.removeItem(KEY)
+        } catch (e) {}
+        document.querySelectorAll('a[data-legal]').forEach(function (a) {
+          a.addEventListener('click', function () {
+            try {
+              sessionStorage.setItem(KEY, String(history.state.legalDepth + 1))
+            } catch (e) {}
+          })
+        })
+        window.backToApp = function () {
+          var depth = (history.state && history.state.legalDepth) || 0
+          if (depth > 0) {
+            history.go(-depth)
+            return false
+          }
+          // 링크로 바로 들어왔으면 앱 첫 화면으로
+          return true
+        }
+      })()
+    </script>
   </body>
 </html>

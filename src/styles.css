@@ -526,9 +526,13 @@ mark.active {
   border-radius: 26px 26px 0 0;
   box-shadow: var(--shadow);
   font-size: var(--ui-md);
-  scrollbar-width: thin;
-  scrollbar-color: var(--faint) transparent;
+  /* 스크롤은 그대로 되고 막대만 숨긴다 */
+  scrollbar-width: none;
   animation: sheet-up 0.22s ease-out;
+}
+
+.panel::-webkit-scrollbar {
+  display: none;
 }
 
 /* ⋯ 메뉴 버튼은 휴대폰 읽기 화면에서만 보인다 */
@@ -556,6 +560,30 @@ mark.active {
 @keyframes sheet-up {
   from {
     transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+/* 닫힐 때: 시트는 아래로 내려가고 뒤 배경은 걷힌다 (App의 SHEET_LEAVE_MS와 같은 길이, 열릴 때와 같은 0.22초) */
+.panel.leaving {
+  animation: sheet-down 0.22s ease-in forwards;
+  pointer-events: none;
+}
+
+.sheet-backdrop.leaving {
+  animation: fade-out 0.18s ease-in forwards;
+}
+
+/* 열릴 때(sheet-up)를 그대로 거꾸로 */
+@keyframes sheet-down {
+  to {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
     opacity: 0;
   }
 }
