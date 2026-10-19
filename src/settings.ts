@@ -15,7 +15,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   font: 'sans',
-  fontSize: 18,
+  fontSize: 15,
   lineHeight: 1.8,
   width: 'normal',
   lineNumbers: false,

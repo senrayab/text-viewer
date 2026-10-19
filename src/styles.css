@@ -259,7 +259,7 @@ kbd {
 .content {
   max-width: calc(var(--maxw) + 80px);
   margin: 0 auto;
-  padding: 56px 40px 40vh;
+  padding: 56px 40px 72px;
   font-family: var(--font);
   font-size: var(--fs);
   line-height: var(--lh);
@@ -719,7 +719,7 @@ mark.active {
 
 @media (max-width: 640px) {
   .content {
-    padding: 28px 20px 40vh;
+    padding: 28px 20px 48px;
   }
 
   .floating {
