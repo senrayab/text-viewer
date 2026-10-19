@@ -758,11 +758,6 @@ mark.active {
   color: var(--muted);
 }
 
-.drop-zone .note {
-  margin: 24px 0 0;
-  font-size: var(--ui-xs);
-}
-
 .drop-zone .error {
   margin: 12px 0 0;
   color: #d9534f;

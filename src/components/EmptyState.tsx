@@ -28,7 +28,6 @@ export function EmptyState({ onOpen, recentName, onOpenRecent, error }: EmptySta
           <button className="primary" onClick={onOpen}>
             파일 선택
           </button>
-          <p className="note">UTF-8 · EUC-KR · UTF-16 인코딩 자동 감지</p>
           {error && <p className="error">{error}</p>}
         </div>
         {recentName && (
