@@ -4,6 +4,7 @@ import {
   BookOpen,
   BookmarkCheck,
   BookmarkPlus,
+  Check,
   CaseSensitive,
   CircleCheck,
   CircleDashed,
@@ -73,6 +74,8 @@ export const SaveIcon = icon(BookmarkPlus, 18)
 export const SavedIcon = icon(BookmarkCheck, 18)
 export const MoreIcon = icon(Ellipsis, 16)
 export const EditIcon = icon(Pencil, 16)
+/** 편집 중일 때: 바꾼 것은 이미 저장돼 있고, 누르면 편집을 끝낸다 */
+export const EditDoneIcon = icon(Check, 16)
 export const TrashIcon = icon(Trash2, 16)
 export const CoverIcon = icon(ImagePlus, 16)
 export const CoverRemoveIcon = icon(ImageMinus, 16)
@@ -85,6 +88,7 @@ export const SortIcon = icon(ArrowDownUp, 14)
 export const UnreadIcon = icon(CircleDashed, 18)
 export const ReadingIcon = icon(CircleDotDashed, 18)
 export const DoneIcon = icon(CircleCheck, 18)
+export const CheckIcon = icon(Check, 14)
 
 /** 서재에서 최근에 읽은 작품 표시 — 선 대신 채운 작은 점 */
 export const RecentDotIcon = () => <CircleSmall size={12} strokeWidth={0} fill="currentColor" aria-hidden />

@@ -98,9 +98,9 @@ const PART_RANK: Record<string, [number, string]> = {
   後: [2, '후'],
 }
 
-/** 프롤로그·에필로그·외전 (뒤에 번호가 붙을 수 있다): "외전 2", "番外1", "에필로그" … */
+/** 프롤로그·에필로그·외전 (뒤에 번호가 붙을 수 있다): "외전 2", "番外1", "(外)", "에필로그" … */
 const SPECIAL_PATTERN = new RegExp(
-  String.raw`^(.+?)${SEP}*[(\[]?\s*(프롤로그|서장|序章|序|에필로그|후기|외전|番外|특별편|외)${SEP}*(\d+)?\s*(?:화|편)?\s*[)\]]?$`,
+  String.raw`^(.+?)${SEP}*[(\[]?\s*(프롤로그|서장|序章|序|에필로그|후기|외전|番外|特別編|특별편|外|외)${SEP}*(\d+)?\s*(?:화|편)?\s*[)\]]?$`,
 )
 const SPECIAL_KIND: Record<string, [EpisodeKind, string]> = {
   프롤로그: ['prologue', '프롤로그'],
@@ -111,7 +111,9 @@ const SPECIAL_KIND: Record<string, [EpisodeKind, string]> = {
   후기: ['epilogue', '후기'],
   외전: ['side', '외전'],
   番外: ['side', '외전'],
+  特別編: ['side', '특별편'],
   특별편: ['side', '특별편'],
+  外: ['side', '외전'],
   외: ['side', '외전'],
 }
 
@@ -191,11 +193,35 @@ export function parseEpisodeName(fileName: string): ParsedName {
   return { base: name, label: name }
 }
 
+/**
+ * 파일명을 한꺼번에 읽는다. 1편에는 번호를 안 붙이고 2편부터 "제목 (2)", "제목 (3)"처럼 붙이는 경우가 많아서,
+ * 번호 없는 "제목"이 같은 이름의 2편 이후와 함께 있으면(1편은 없을 때) 그 파일을 1편으로 본다.
+ * known: 함께 따져 볼 다른 파일명(이미 서재에 있는 편 등) — 결과에는 들어가지 않는다
+ */
+export function parseEpisodeNames(names: string[], known: string[] = []): ParsedName[] {
+  const parsed = names.map(parseEpisodeName)
+  // 작품 이름 → 2편 이후에 쓴 단위(화·편 …), 1편이 이미 있는 작품 이름
+  const later = new Map<string, string>()
+  const hasFirst = new Set<string>()
+  for (const p of [...parsed, ...known.map(parseEpisodeName)]) {
+    if (p.kind !== 'main' || p.number === undefined) continue
+    const key = p.base.toLowerCase()
+    if (p.number === 1) hasFirst.add(key)
+    else if (p.number > 1 && !later.has(key)) later.set(key, p.label.match(/^\d+(화|편|권|부|장|회)/)?.[1] ?? '편')
+  }
+  return parsed.map((p) => {
+    const key = p.base.toLowerCase()
+    if (p.kind || !later.has(key) || hasFirst.has(key)) return p
+    return { base: p.base, kind: 'main', number: 1, label: `1${later.get(key)}`, order: orderOf('main', 1) }
+  })
+}
+
 const collator = new Intl.Collator('ko', { numeric: true })
 
 /** 편 정렬 — 파일명에서 순서를 다시 계산한다(규칙이 바뀌어도 이미 담은 편이 함께 맞춰진다). 알아볼 수 없는 이름은 담은 순서. */
 function sortEpisodes(list: Episode[]) {
-  const key = new Map(list.map((e) => [e.id, parseEpisodeName(e.fileName).order ?? orderOf('main', e.order)]))
+  const parsed = parseEpisodeNames(list.map((e) => e.fileName))
+  const key = new Map(list.map((e, i) => [e.id, parsed[i].order ?? orderOf('main', e.order)]))
   return list.sort((a, b) => key.get(a.id)! - key.get(b.id)! || collator.compare(a.fileName, b.fileName))
 }
 
@@ -268,6 +294,15 @@ export async function listLibrary(): Promise<WorkSummary[]> {
     prepareCover(original)
       .then((cover) => (cover.size < original.size ? patchWork(w.id, { cover }) : undefined))
       .catch(() => {})
+  }
+  // 1편으로 보게 된 번호 없는 편은, 이름을 직접 바꾸지 않았다면 편 이름도 "1편"으로 고쳐 둔다
+  for (const list of byWork.values()) {
+    const parsed = parseEpisodeNames(list.map((e) => e.fileName))
+    list.forEach((e, i) => {
+      if (parsed[i].label === e.title || e.title !== parseEpisodeName(e.fileName).label) return
+      e.title = parsed[i].label
+      patchEpisode(e.id, { title: e.title }).catch(() => {})
+    })
   }
   return works.map((work) => ({ work, episodes: sortEpisodes(byWork.get(work.id) ?? []) }))
 }
@@ -400,6 +435,16 @@ export async function addToLibrary(groups: PendingGroup[]) {
 }
 
 type WorkChanges = Partial<Pick<Work, 'title' | 'cover' | 'coverHue'>>
+
+/** 앱이 알아서 고쳐 두는 편 정보 */
+async function patchEpisode(id: string, changes: Pick<Episode, 'title'>) {
+  const db = await openDb()
+  const tx = db.transaction('episodes', 'readwrite')
+  const store = tx.objectStore('episodes')
+  const episode = await request<Episode | undefined>(store.get(id))
+  if (episode) store.put({ ...episode, ...changes })
+  await done(tx)
+}
 
 /** 표지 색·크기처럼 앱이 알아서 고쳐 두는 값. 이용자가 작품을 고친 것은 아니므로 수정 시각은 그대로 둔다 */
 async function patchWork(id: string, changes: Pick<Work, 'cover'> | Pick<Work, 'coverHue'>) {

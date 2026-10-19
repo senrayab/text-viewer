@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { PRIVACY_URL, TERMS_URL } from '../config'
 import { connectedAccount, driveConfigured, preloadGoogle } from '../lib/drive'
 import { FONT_SIZE, FONTS, LINE_HEIGHT, THEMES, WIDTHS, clamp, type Settings } from '../settings'
@@ -62,7 +62,8 @@ function Segmented<T extends string>({
   value,
   onChange,
 }: {
-  options: { value: T; label: string }[]
+  /** lead: 글자 앞에 붙는 작은 표시(테마 색 등), style: 글자 모양(폰트 등) */
+  options: { value: T; label: string; lead?: ReactNode; style?: CSSProperties }[]
   value: T
   onChange: (v: T) => void
 }) {
@@ -70,7 +71,8 @@ function Segmented<T extends string>({
     <div className="segmented">
       {options.map((o) => (
         <button key={o.value} className={o.value === value ? 'on' : undefined} onClick={() => onChange(o.value)}>
-          {o.label}
+          {o.lead}
+          <span style={o.style}>{o.label}</span>
         </button>
       ))}
     </div>
@@ -207,35 +209,20 @@ export function SettingsPanel({ settings, onChange, onClose, leaving, onOpenBack
       </div>
 
       <Section title="Theme">
-        <div className="tiles four">
-          {THEMES.map((t) => (
-            <button
-              key={t.value}
-              className={`tile${t.value === settings.theme ? ' on' : ''}`}
-              onClick={() => onChange('theme', t.value)}
-            >
-              <span className={`theme-page theme-page-${t.value}`}>가</span>
-              <span className="tile-label">{t.label}</span>
-            </button>
-          ))}
-        </div>
+        <Segmented
+          options={THEMES.map((t) => ({ ...t, lead: <span className={`theme-dot theme-dot-${t.value}`} /> }))}
+          value={settings.theme}
+          onChange={(v) => onChange('theme', v)}
+        />
       </Section>
 
       <Section title="Font">
-        <div className="tiles three">
-          {FONTS.map((f) => (
-            <button
-              key={f.value}
-              className={`tile${f.value === settings.font ? ' on' : ''}`}
-              onClick={() => onChange('font', f.value)}
-            >
-              <span className="glyph" style={{ fontFamily: f.stack }}>
-                가
-              </span>
-              <span className="tile-label">{f.label}</span>
-            </button>
-          ))}
-        </div>
+        {/* 이름을 각 글꼴로 써서 고르기 전에 모양을 볼 수 있게 한다 */}
+        <Segmented
+          options={FONTS.map((f) => ({ ...f, style: { fontFamily: f.stack } }))}
+          value={settings.font}
+          onChange={(v) => onChange('font', v)}
+        />
       </Section>
 
       <Section title="Width">

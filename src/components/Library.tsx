@@ -2,7 +2,7 @@ import { useMemo, useState, type CSSProperties } from 'react'
 import { lastReadAt, workProgress, type WorkSummary } from '../lib/library'
 import type { Position } from '../lib/storage'
 import { Cover, workHue } from './Cover'
-import { MoreIcon, PlusIcon, RecentDotIcon } from './Icons'
+import { CheckIcon, EditIcon, EditDoneIcon, MoreIcon, PlusIcon, RecentDotIcon, TrashIcon } from './Icons'
 import { InstallHint } from './InstallHint'
 
 type Filter = 'all' | 'reading' | 'unread' | 'done'
@@ -20,10 +20,28 @@ interface LibraryProps {
   onOpen: (summary: WorkSummary) => void
   onDetail: (summary: WorkSummary) => void
   onAdd: () => void
+  /** 고른 작품들을 지운다. 지웠으면 true */
+  onDeleteWorks: (works: WorkSummary[]) => Promise<boolean>
 }
 
-export function Library({ items, positions, onOpen, onDetail, onAdd }: LibraryProps) {
+export function Library({ items, positions, onOpen, onDetail, onAdd, onDeleteWorks }: LibraryProps) {
   const [filter, setFilter] = useState<Filter>('all')
+  // 편집 중이면 표지를 눌러 여러 작품을 고르고 한 번에 지운다
+  const [editing, setEditing] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(() => new Set())
+
+  const stopEditing = () => {
+    setEditing(false)
+    setSelected(new Set())
+  }
+
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
 
   // 최근에 읽었거나 담은 작품이 앞에 온다
   const sorted = useMemo(() => {
@@ -48,14 +66,32 @@ export function Library({ items, positions, onOpen, onDetail, onAdd }: LibraryPr
     return true
   })
 
+  const allSelected = visible.length > 0 && visible.every(({ summary }) => selected.has(summary.work.id))
+
+  const removeSelected = async () => {
+    const works = items.filter((s) => selected.has(s.work.id))
+    if (works.length && (await onDeleteWorks(works))) stopEditing()
+  }
+
   return (
     <>
-      <div className="page-scroll">
+      <div className={`page-scroll${editing ? ' editing' : ''}`}>
         <div className="page library">
           <header className="page-head">
             <span className="eyebrow">LIBRARY</span>
             <h1 className="display">내 서재</h1>
             <p>{items.length ? `${items.length}개의 작품` : '아직 담은 작품이 없어요'}</p>
+            {/* 작품 화면의 편집 버튼과 같은 모양·자리: 연필, 편집 중이면 짙은 원에 체크 */}
+            {items.length > 0 && (
+              <button
+                className={`round-btn hero-edit${editing ? ' dark' : ''}`}
+                onClick={() => (editing ? stopEditing() : setEditing(true))}
+                title={editing ? '편집 끝내기' : '편집'}
+                aria-pressed={editing}
+              >
+                {editing ? <EditDoneIcon /> : <EditIcon />}
+              </button>
+            )}
           </header>
 
           <InstallHint />
@@ -94,12 +130,27 @@ export function Library({ items, positions, onOpen, onDetail, onAdd }: LibraryPr
                   {visible.map(({ summary: s, progress }) => {
                     const count = s.episodes.length
                     const percent = progress.done ? 100 : progress.percent
+                    const checked = selected.has(s.work.id)
                     return (
-                      <li key={s.work.id} className="book" style={{ '--h': workHue(s.work) } as CSSProperties}>
-                        <button className="book-cover" onClick={() => onOpen(s)} aria-label={`${s.work.title} 열기`}>
+                      <li
+                        key={s.work.id}
+                        className={`book${editing ? ' selecting' : ''}${checked ? ' checked' : ''}`}
+                        style={{ '--h': workHue(s.work) } as CSSProperties}
+                      >
+                        <button
+                          className="book-cover"
+                          onClick={() => (editing ? toggle(s.work.id) : onOpen(s))}
+                          aria-label={editing ? `${s.work.title} ${checked ? '선택 해제' : '선택'}` : `${s.work.title} 열기`}
+                          aria-pressed={editing ? checked : undefined}
+                        >
                           <span className="book-stage" />
                           <Cover title={s.work.title} image={s.work.cover} />
                           {count > 1 && <span className="badge">{count}편</span>}
+                          {editing && (
+                            <span className="book-check" aria-hidden>
+                              {checked && <CheckIcon />}
+                            </span>
+                          )}
                         </button>
                         <div className="book-meta">
                           <div className="book-text">
@@ -119,9 +170,11 @@ export function Library({ items, positions, onOpen, onDetail, onAdd }: LibraryPr
                               <span className="book-pct">{percent}%</span>
                             </div>
                           </div>
-                          <button className="icon-btn small" onClick={() => onDetail(s)} title="작품 정보">
-                            <MoreIcon />
-                          </button>
+                          {!editing && (
+                            <button className="icon-btn small" onClick={() => onDetail(s)} title="작품 정보">
+                              <MoreIcon />
+                            </button>
+                          )}
                         </div>
                       </li>
                     )
@@ -132,10 +185,28 @@ export function Library({ items, positions, onOpen, onDetail, onAdd }: LibraryPr
           )}
         </div>
       </div>
-      {/* 작품 담기: 오른쪽 아래에 떠 있는 버튼 */}
-      <button className="round-btn dark fab" onClick={onAdd} title="작품 담기">
-        <PlusIcon size={22} />
-      </button>
+      {editing ? (
+        // 편집 중: 아래에 고르기·지우기 막대
+        <div className="select-bar">
+          <button
+            className="pill"
+            onClick={() =>
+              setSelected(allSelected ? new Set() : new Set(visible.map(({ summary }) => summary.work.id)))
+            }
+          >
+            {allSelected ? '선택 해제' : '전체 선택'}
+          </button>
+          <button className="pill with-icon danger-fill" disabled={!selected.size} onClick={removeSelected}>
+            <TrashIcon />
+            {selected.size ? `${selected.size}개 삭제` : '삭제'}
+          </button>
+        </div>
+      ) : (
+        // 작품 담기: 오른쪽 아래에 떠 있는 버튼
+        <button className="round-btn dark fab" onClick={onAdd} title="작품 담기">
+          <PlusIcon size={22} />
+        </button>
+      )}
     </>
   )
 }

@@ -119,6 +119,21 @@ body,
   margin: 0;
 }
 
+/* 화면 UI(제목·버튼·표지 글자 등)는 눌러도 글자가 잡히거나 검색 창이 뜨지 않게 한다.
+   읽는 본문과 입력칸만 꾹 눌러(PC는 끌어서) 고를 수 있다. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.content,
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 body {
   background: var(--bg);
   color: var(--fg);
@@ -172,6 +187,7 @@ kbd {
 
 .toolbar .back {
   margin-left: -4px;
+  margin-right: 6px;
 }
 
 /* 넓은 화면에서는 머리를 가운데 칸에 맞춘다 */
@@ -258,6 +274,50 @@ kbd {
 .focus .toolbar,
 .focus .status {
   display: none;
+}
+
+/* 읽는 화면: 머리는 본문 위에 떠 있고, 내려 읽으면 위로 숨었다가 올려 읽으면 다시 내려온다.
+   본문은 머리 높이(App의 HEADER_H)만큼 아래에서 시작하고, 읽던 줄도 그 높이에서 잰다. */
+.app {
+  position: relative;
+}
+
+.toolbar.reading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--bg);
+  transition: transform 0.22s ease, background-color 0.2s;
+}
+
+.toolbar.reading.tucked {
+  transform: translateY(-100%);
+}
+
+.toolbar.reading + .main .reader {
+  padding-top: 64px;
+  scroll-padding-top: 64px;
+}
+
+/* 집중 모드는 머리가 없으니 위 여백만 없앤다 (읽던 줄은 같은 높이에서 잰다) */
+.focus .toolbar.reading + .main .reader {
+  padding-top: 0;
+}
+
+.toolbar.reading + .main .progress {
+  top: 64px;
+  transition: transform 0.22s ease;
+}
+
+.toolbar.reading.tucked + .main .progress,
+.focus .toolbar.reading + .main .progress {
+  transform: translateY(-64px);
+}
+
+.toolbar.reading + .main .floating {
+  top: 76px;
 }
 
 /* ── 버튼 ─────────────────────────────────── */
@@ -738,88 +798,27 @@ mark.active {
   font-weight: 600;
 }
 
-.tiles {
-  display: grid;
-  gap: 8px;
-}
-
-.tiles.four {
-  grid-template-columns: repeat(4, 1fr);
-}
-
-.tiles.three {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  padding: 8px 0 7px;
-  border: 1.5px solid transparent;
-  border-radius: 14px;
-  background: var(--soft);
-  cursor: pointer;
-  transition: border-color 0.12s, background-color 0.12s;
-}
-
-.tile:hover {
-  background: var(--hover);
-}
-
-.tile.on {
-  border-color: var(--accent);
-  background: var(--surface);
-}
-
-.tile-label {
-  font-size: var(--ui-xs);
-  color: var(--muted);
-}
-
-.tile.on .tile-label {
-  color: var(--fg);
-  font-weight: 500;
-}
-
-/* 테마 타일: 해당 테마의 배경·글자색으로 그린 작은 종이 */
-.theme-page {
-  width: 26px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(128, 128, 128, 0.25);
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: normal;
+/* 테마 탭의 색 동그라미: 그 테마의 종이색, 테두리는 밝은 색이 바탕에 묻히지 않게 */
+.theme-dot {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  border-radius: 50%;
 }
 
 /* border-box: 그라데이션이 테두리 아래에서 반복되면 가장자리 색이 뒤집혀 보인다 */
-.theme-page-system {
+.theme-dot-system {
   background: linear-gradient(135deg, #fbfbf9 50%, #161616 50%) border-box;
-  color: #8b8b86;
 }
-.theme-page-light {
+.theme-dot-light {
   background: #fbfbf9;
-  color: #2a2a28;
 }
-.theme-page-sepia {
+.theme-dot-sepia {
   background: #f5eddb;
-  color: #4f3f2e;
 }
-.theme-page-dark {
+.theme-dot-dark {
   background: #161616;
-  color: #d4d4d0;
-}
-
-.glyph {
-  height: 30px;
-  display: grid;
-  place-items: center;
-  font-size: 20px;
-  letter-spacing: normal;
 }
 
 .segmented {
@@ -832,7 +831,14 @@ mark.active {
 
 .segmented button {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
   padding: 8px 0;
+  /* 글꼴마다 줄 높이가 달라 폰트 탭만 키가 커지지 않도록 고정한다 */
+  line-height: 20px;
   border: 0;
   border-radius: 9px;
   background: transparent;
@@ -1036,6 +1042,11 @@ mark.active {
   gap: 24px;
 }
 
+/* 서재 머리: 편집 버튼(.hero-edit)을 작품 화면과 같은 자리(오른쪽 위)에 둔다 */
+.page-head {
+  position: relative;
+}
+
 .page-head p {
   margin: 8px 0 0;
   font-size: var(--ui-sm);
@@ -1095,7 +1106,7 @@ mark.active {
 .fab {
   position: absolute;
   /* 넓은 화면에서는 서재 칸의 오른쪽 끝에 맞춘다 */
-  right: max(20px, calc((100% - 880px) / 2 + 24px));
+  right: max(16px, calc((100% - 880px) / 2 + 24px));
   bottom: calc(24px + env(safe-area-inset-bottom));
   z-index: 15;
   width: 56px;
@@ -1372,6 +1383,71 @@ mark.active {
 
 .book-cover:hover .cover {
   transform: translateY(-4px);
+}
+
+/* 서재 편집: 표지 왼쪽 위의 동그라미, 고르면 짙은 색 체크 */
+.book-check {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  background: rgba(24, 24, 27, 0.28);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.book.checked .book-check {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.book.selecting .book-cover .cover {
+  transition: opacity 0.15s, transform 0.18s;
+}
+
+/* 편집 중 고르지 않은 작품은 흐리게 */
+.book.selecting:not(.checked) .cover {
+  opacity: 0.55;
+}
+
+/* 편집 중에는 아래 막대에 마지막 줄이 가리지 않도록 */
+.page-scroll.editing .page.library {
+  padding-bottom: 120px;
+}
+
+.select-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 15;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px max(16px, calc((100% - 880px) / 2 + 24px)) calc(14px + env(safe-area-inset-bottom));
+  animation: sheet-up 0.2s ease-out;
+}
+
+.select-bar .pill {
+  box-shadow: var(--raise);
+}
+
+.pill.danger-fill {
+  border-color: transparent;
+  background: #c4553a;
+  color: #fff;
+}
+
+.pill.danger-fill:hover:not(:disabled) {
+  background: #c4553a;
+  opacity: 0.9;
 }
 
 .badge {
@@ -1959,8 +2035,9 @@ select.text-input {
 }
 
 @media (max-width: 640px) {
+  /* 휴대폰은 좌우 여백을 줄여 표지를 조금 더 크게, 왼쪽 선은 뒤로 버튼과 맞춘다 */
   .page {
-    padding: 24px 20px 48px;
+    padding: 24px 16px 48px;
     gap: 20px;
   }
 

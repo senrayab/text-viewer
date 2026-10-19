@@ -35,7 +35,7 @@ import {
   groupFiles,
   listLibrary,
   loadEpisodeFile,
-  parseEpisodeName,
+  parseEpisodeNames,
   prepareCover,
   updateWork,
   type Episode,
@@ -78,6 +78,11 @@ interface SessionState {
 }
 
 const ACCEPT = '.txt,.text,.log,text/plain'
+// 읽는 화면의 머리 높이 (styles.css의 .toolbar와 같다). 본문은 이 아래에서 시작하고, 읽던 줄도 이 높이에서 잰다
+const HEADER_H = 64
+// 이만큼 이어서 내려 읽으면 머리를 숨기고, 이만큼 올리면 다시 보인다
+const HEADER_SWAY = 24
+
 // 설정 시트가 아래로 내려가며 닫히는 시간 (styles.css의 .panel.leaving과 같다)
 const SHEET_LEAVE_MS = 220
 
@@ -129,6 +134,10 @@ export default function App() {
   const docKeyRef = useRef<string | null>(null)
   const saveTimer = useRef<number>()
   const scrollFrame = useRef(0)
+  // 읽는 화면의 머리: 내려 읽으면 위로 숨고, 올려 읽으면 다시 내려온다
+  const [headerTucked, setHeaderTucked] = useState(false)
+  const lastScrollTop = useRef(0)
+  const scrollSway = useRef(0)
 
   const showToast = useCallback((text: string, ms = 1800) => setToast({ text, ms }), [])
   useEffect(() => {
@@ -314,7 +323,12 @@ export default function App() {
 
   const startAdd = useCallback(
     (items: { file: File; buffer: ArrayBuffer }[]) => {
-      const pending = items.map(({ file, buffer }) => ({ file, buffer, parsed: parseEpisodeName(file.name) }))
+      const known = library.flatMap((s) => s.episodes.map((e) => e.fileName))
+      const parsed = parseEpisodeNames(
+        items.map(({ file }) => file.name),
+        known,
+      )
+      const pending = items.map(({ file, buffer }, i) => ({ file, buffer, parsed: parsed[i] }))
       setAdding(groupFiles(pending, library.map((s) => s.work)))
     },
     [library],
@@ -345,7 +359,12 @@ export default function App() {
       return
     }
     // 작품 화면의 "편 추가하기" — 묻지 않고 그 작품에 담는다
-    const pending = items.map(({ file, buffer }) => ({ file, buffer, parsed: parseEpisodeName(file.name) }))
+    const known = library.find((s) => s.work.id === target)?.episodes.map((e) => e.fileName)
+    const parsed = parseEpisodeNames(
+      items.map(({ file }) => file.name),
+      known,
+    )
+    const pending = items.map(({ file, buffer }, i) => ({ file, buffer, parsed: parsed[i] }))
     confirmAdd([{ target, title: '', files: groupFiles(pending, []).flatMap((g) => g.files) }])
   }
 
@@ -362,6 +381,21 @@ export default function App() {
     await deleteWork(summary.work.id)
     await refreshLibrary()
     navigate({ name: 'library' }, true)
+  }
+
+  // 서재 편집에서 고른 작품들을 한 번에 지운다
+  const removeWorks = async (works: WorkSummary[]) => {
+    const episodes = works.reduce((n, s) => n + s.episodes.length, 0)
+    const what = works.length === 1 ? `'${works[0].work.title}'과(와) ${episodes}편을` : `작품 ${works.length}개와 ${episodes}편을`
+    if (!confirm(`${what} 모두 서재에서 삭제할까요?`)) return false
+    try {
+      for (const s of works) await deleteWork(s.work.id)
+      showToast(works.length === 1 ? '작품을 삭제했어요.' : `작품 ${works.length}개를 삭제했어요.`)
+    } catch {
+      showToast('삭제하지 못했어요. 다시 시도해 주세요.', 2600)
+    }
+    await refreshLibrary()
+    return true
   }
 
   const changeCover = async (summary: WorkSummary, file: File | null) => {
@@ -471,9 +505,18 @@ export default function App() {
       const ratio = max > 0 ? scroller.scrollTop / max : 1
       setProgress(ratio)
 
+      // 같은 방향으로 어느 정도 움직였을 때만 머리를 넣고 빼서, 살짝 흔들리는 정도로는 깜빡이지 않게 한다
+      const top = scroller.scrollTop
+      const delta = top - lastScrollTop.current
+      lastScrollTop.current = top
+      scrollSway.current = Math.sign(delta) === Math.sign(scrollSway.current) ? scrollSway.current + delta : delta
+      if (top < HEADER_H) setHeaderTucked(false)
+      else if (scrollSway.current > HEADER_SWAY) setHeaderTucked(true)
+      else if (scrollSway.current < -HEADER_SWAY) setHeaderTucked(false)
+
       const box = scroller.getBoundingClientRect()
       const x = Math.max(content.getBoundingClientRect().left, box.left) + 24
-      const hit = document.elementFromPoint(x, box.top + 4)?.closest<HTMLElement>('.line')
+      const hit = document.elementFromPoint(x, box.top + HEADER_H + 4)?.closest<HTMLElement>('.line')
       topLineRef.current = hit ? Number(hit.dataset.line) : scroller.scrollTop === 0 ? 1 : topLineRef.current
 
       const key = docKeyRef.current
@@ -489,10 +532,14 @@ export default function App() {
     if (!doc) return
     const line = loadPosition(doc.key)
     topLineRef.current = line
+    setHeaderTucked(false)
     requestAnimationFrame(() => {
       if (line > 1) scrollToLine(line, false)
       else scrollerRef.current?.scrollTo({ top: 0 })
       scrollerRef.current?.focus({ preventScroll: true })
+      // 읽던 곳으로 옮겨 간 것은 내려 읽은 것이 아니므로 머리를 숨기지 않는다
+      lastScrollTop.current = scrollerRef.current?.scrollTop ?? 0
+      scrollSway.current = 0
       onScroll()
     })
   }, [doc, scrollToLine, onScroll])
@@ -711,7 +758,9 @@ export default function App() {
 
   return (
     <div className={`app${focusMode ? ' focus' : ''}`}>
-      <header className={`toolbar${doc ? ' reading' : ''}`}>
+      <header
+        className={`toolbar${doc ? ' reading' : ''}${doc && headerTucked && !searchOpen && !menuOpen ? ' tucked' : ''}`}
+      >
         {(doc || view.name !== 'home') && (
           <button className="icon-btn round back" onClick={goBack} title="뒤로">
             <BackIcon />
@@ -830,6 +879,7 @@ export default function App() {
             positions={positions}
             onOpen={(s) => (s.episodes.length === 1 ? openEpisode(s.episodes[0]) : navigate({ name: 'work', workId: s.work.id }))}
             onDetail={(s) => navigate({ name: 'work', workId: s.work.id })}
+            onDeleteWorks={removeWorks}
             onAdd={() => {
               addTargetRef.current = null
               libraryInputRef.current?.click()

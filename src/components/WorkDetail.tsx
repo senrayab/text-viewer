@@ -16,6 +16,7 @@ import {
   CoverRemoveIcon,
   DoneIcon,
   EditIcon,
+  EditDoneIcon,
   ReadingIcon,
   SortIcon,
   TrashIcon,
@@ -164,7 +165,7 @@ export function WorkDetail({
             onClick={() => setEditing((v) => !v)}
             title={editing ? '편집 끝내기' : '편집'}
           >
-            <EditIcon />
+            {editing ? <EditDoneIcon /> : <EditIcon />}
           </button>
         </header>
 
