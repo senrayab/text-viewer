@@ -29,11 +29,15 @@ const ERRORS: Record<string, string> = {
   'access_denied': '드라이브 접근을 허용해야 백업할 수 있어요.',
   'signed-out': '로그인이 만료됐어요. 다시 연결해 주세요.',
   'invalid-backup': '백업 파일을 읽을 수 없어요.',
+  'scope-denied':
+    '드라이브 접근이 허용되지 않았어요. 다시 연결할 때 “Google Drive에서 이 앱의 구성 데이터 보기 및 관리”에 체크해 주세요.',
+  'api-disabled': '이 앱의 Google Cloud 프로젝트에서 Google Drive API가 꺼져 있어요.',
 }
 
 function errorMessage(e: unknown) {
-  const code = e instanceof Error ? e.message : ''
-  return ERRORS[code] ?? '문제가 생겼어요. 잠시 후 다시 시도해 주세요.'
+  const code = e instanceof Error ? e.message : String(e)
+  // 모르는 오류는 원인을 찾을 수 있도록 코드를 함께 보여준다
+  return ERRORS[code] ?? `문제가 생겼어요. 잠시 후 다시 시도해 주세요. (${code || 'unknown'})`
 }
 
 function formatDate(iso: string) {
@@ -69,7 +73,10 @@ export function BackupDialog({ onClose, onRestored }: BackupDialogProps) {
         setSignedIn(true)
         return task()
       })
-      .catch((e) => setMessage({ text: errorMessage(e), error: true }))
+      .catch((e) => {
+        if (!isSignedIn()) setSignedIn(false)
+        setMessage({ text: errorMessage(e), error: true })
+      })
       .finally(() => setBusy(null))
   }
 

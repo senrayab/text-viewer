@@ -50,6 +50,10 @@ export function signIn(): Promise<string> {
           reject(new Error(response.error ?? 'denied'))
           return
         }
+        if (response.scope && !response.scope.split(' ').includes(SCOPE)) {
+          reject(new Error('scope-denied'))
+          return
+        }
         token = { value: response.access_token, expires: Date.now() + Number(response.expires_in) * 1000 }
         resolve(response.access_token)
       },
@@ -69,7 +73,21 @@ async function api(path: string, init: RequestInit = {}) {
     token = null
     throw new Error('signed-out')
   }
-  if (!res.ok) throw new Error(`drive-${res.status}`)
+  if (!res.ok) {
+    let reason = ''
+    try {
+      const body = await res.json()
+      reason = body?.error?.errors?.[0]?.reason ?? body?.error?.status ?? ''
+    } catch {
+      // 본문이 JSON이 아니면 상태 코드만 쓴다
+    }
+    if (/accessNotConfigured|SERVICE_DISABLED/i.test(reason)) throw new Error('api-disabled')
+    if (res.status === 403 && /insufficient|PERMISSION_DENIED/i.test(reason)) {
+      token = null
+      throw new Error('scope-denied')
+    }
+    throw new Error(`drive-${res.status}${reason ? ` ${reason}` : ''}`)
+  }
   return res
 }
 

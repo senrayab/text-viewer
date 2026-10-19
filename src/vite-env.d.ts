@@ -35,6 +35,8 @@ interface WindowEventMap {
 interface GoogleTokenResponse {
   access_token?: string
   expires_in?: number | string
+  /** 실제로 허용된 권한 목록 (공백으로 구분) */
+  scope?: string
   error?: string
 }
 
