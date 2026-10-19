@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { FONT_SIZE, FONTS, LINE_HEIGHT, THEMES, WIDTHS, clamp, type Settings } from '../settings'
-import { MinusIcon, PlusIcon } from './Icons'
+import { FontSizeIcon, LineHeightIcon, LineNumberIcon, MinusIcon, PlusIcon, RecentIcon, WrapIcon } from './Icons'
 
 interface SettingsPanelProps {
   settings: Settings
@@ -28,13 +28,24 @@ function Segmented<T extends string>({
   )
 }
 
+function RowLabel({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return (
+    <span className="row-label">
+      {icon}
+      {children}
+    </span>
+  )
+}
+
 function Stepper({
+  icon,
   label,
   value,
   display,
   range,
   onChange,
 }: {
+  icon: ReactNode
   label: string
   value: number
   display: string
@@ -44,7 +55,7 @@ function Stepper({
   const step = (dir: number) => onChange(clamp(Math.round((value + dir * range.step) * 10) / 10, range.min, range.max))
   return (
     <div className="row">
-      <span>{label}</span>
+      <RowLabel icon={icon}>{label}</RowLabel>
       <div className="stepper">
         <button className="icon-btn small" onClick={() => step(-1)} disabled={value <= range.min}>
           <MinusIcon />
@@ -58,12 +69,24 @@ function Stepper({
   )
 }
 
-function Toggle({ label, hint, checked, onChange }: { label: string; hint: string; checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({
+  icon,
+  label,
+  hint,
+  checked,
+  onChange,
+}: {
+  icon: ReactNode
+  label: string
+  hint?: string
+  checked: boolean
+  onChange: (v: boolean) => void
+}) {
   return (
     <label className="row">
-      <span>
-        {label} <kbd>{hint}</kbd>
-      </span>
+      <RowLabel icon={icon}>
+        {label} {hint && <kbd>{hint}</kbd>}
+      </RowLabel>
       <button
         role="switch"
         aria-checked={checked}
@@ -117,6 +140,7 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
 
       <div className="field rows">
         <Stepper
+          icon={<FontSizeIcon />}
           label="글자 크기"
           value={settings.fontSize}
           display={`${settings.fontSize}px`}
@@ -124,14 +148,33 @@ export function SettingsPanel({ settings, onChange, onClose }: SettingsPanelProp
           onChange={(v) => onChange('fontSize', v)}
         />
         <Stepper
+          icon={<LineHeightIcon />}
           label="줄 간격"
           value={settings.lineHeight}
           display={settings.lineHeight.toFixed(1)}
           range={LINE_HEIGHT}
           onChange={(v) => onChange('lineHeight', v)}
         />
-        <Toggle label="줄 번호" hint="L" checked={settings.lineNumbers} onChange={(v) => onChange('lineNumbers', v)} />
-        <Toggle label="자동 줄바꿈" hint="W" checked={settings.wrap} onChange={(v) => onChange('wrap', v)} />
+        <Toggle
+          icon={<LineNumberIcon />}
+          label="줄 번호"
+          hint="L"
+          checked={settings.lineNumbers}
+          onChange={(v) => onChange('lineNumbers', v)}
+        />
+        <Toggle
+          icon={<WrapIcon />}
+          label="자동 줄바꿈"
+          hint="W"
+          checked={settings.wrap}
+          onChange={(v) => onChange('wrap', v)}
+        />
+        <Toggle
+          icon={<RecentIcon />}
+          label="최근 문서 기억"
+          checked={settings.rememberRecent}
+          onChange={(v) => onChange('rememberRecent', v)}
+        />
       </div>
     </div>
   )

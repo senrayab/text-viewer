@@ -12,10 +12,10 @@
   --border: #ececea;
   --surface: #ffffff;
   --hover: rgba(0, 0, 0, 0.05);
-  --accent: #2f6fde;
+  --accent: #2a2a28;
   --mark: rgba(255, 200, 0, 0.35);
   --mark-active: rgba(255, 140, 0, 0.6);
-  --selection: rgba(47, 111, 222, 0.18);
+  --selection: rgba(42, 42, 40, 0.14);
   --overlay: rgba(251, 251, 249, 0.9);
   --shadow: 0 10px 32px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
   color-scheme: light;
@@ -29,10 +29,10 @@
   --border: #e7dcc2;
   --surface: #fbf5e8;
   --hover: rgba(90, 64, 20, 0.07);
-  --accent: #a0662a;
+  --accent: #4f3f2e;
   --mark: rgba(230, 170, 40, 0.35);
   --mark-active: rgba(215, 115, 20, 0.55);
-  --selection: rgba(160, 102, 42, 0.2);
+  --selection: rgba(79, 63, 46, 0.16);
   --overlay: rgba(245, 237, 219, 0.9);
   --shadow: 0 10px 32px rgba(80, 60, 20, 0.1), 0 1px 3px rgba(80, 60, 20, 0.08);
   color-scheme: light;
@@ -46,10 +46,10 @@
   --border: #262626;
   --surface: #1f1f1f;
   --hover: rgba(255, 255, 255, 0.06);
-  --accent: #7aa7ff;
+  --accent: #e4e4e0;
   --mark: rgba(255, 200, 0, 0.22);
   --mark-active: rgba(255, 160, 0, 0.55);
-  --selection: rgba(122, 167, 255, 0.25);
+  --selection: rgba(255, 255, 255, 0.18);
   --overlay: rgba(22, 22, 22, 0.9);
   --shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.02);
   color-scheme: dark;
@@ -117,6 +117,11 @@ kbd {
   gap: 2px;
   padding: 0 12px 0 20px;
   border-bottom: 1px solid var(--border);
+}
+
+.toolbar .back {
+  margin-left: -10px;
+  margin-right: 2px;
 }
 
 .title {
@@ -509,8 +514,9 @@ mark.active {
   box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
 }
 
+/* border-box: 그라데이션이 테두리 아래에서 반복되면 가장자리 색이 뒤집혀 네모처럼 보인다 */
 .sw-system {
-  background: linear-gradient(135deg, #fbfbf9 50%, #161616 50%);
+  background: linear-gradient(135deg, #fbfbf9 50%, #161616 50%) border-box;
 }
 .sw-light {
   background: #fbfbf9;
@@ -528,6 +534,17 @@ mark.active {
   justify-content: space-between;
   min-height: 32px;
   cursor: default;
+}
+
+.row-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row-label svg {
+  flex: none;
+  color: var(--muted);
 }
 
 .row kbd {
@@ -578,6 +595,8 @@ mark.active {
 }
 
 .switch.on::after {
+  /* 다크 테마에서는 켜진 바탕이 밝은 회색이라 손잡이를 배경색으로 뒤집는다 */
+  background: var(--bg);
   transform: translateX(14px);
 }
 
@@ -625,6 +644,42 @@ mark.active {
 .drop-zone .error {
   margin: 12px 0 0;
   color: #d9534f;
+}
+
+.recent-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s;
+}
+
+.recent-btn:hover {
+  background: var(--hover);
+}
+
+.recent-btn svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.recent-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .shortcuts {

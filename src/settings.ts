@@ -10,6 +10,8 @@ export interface Settings {
   width: WidthChoice
   lineNumbers: boolean
   wrap: boolean
+  /** 처음 화면의 "최근 문서 열기"를 위해 마지막 문서를 기억한다 (새로고침 복원과는 별개) */
+  rememberRecent: boolean
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -20,6 +22,7 @@ export const DEFAULT_SETTINGS: Settings = {
   width: 'normal',
   lineNumbers: false,
   wrap: true,
+  rememberRecent: true,
 }
 
 export const THEMES: { value: ThemeChoice; label: string }[] = [

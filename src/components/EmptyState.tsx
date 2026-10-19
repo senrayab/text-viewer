@@ -1,3 +1,5 @@
+import { RecentIcon } from './Icons'
+
 const SHORTCUTS: [string, string][] = [
   ['Ctrl O', '파일 열기'],
   ['Ctrl F', '검색'],
@@ -9,7 +11,14 @@ const SHORTCUTS: [string, string][] = [
   ['W', '자동 줄바꿈'],
 ]
 
-export function EmptyState({ onOpen, error }: { onOpen: () => void; error: string | null }) {
+interface EmptyStateProps {
+  onOpen: () => void
+  recentName?: string
+  onOpenRecent: () => void
+  error: string | null
+}
+
+export function EmptyState({ onOpen, recentName, onOpenRecent, error }: EmptyStateProps) {
   return (
     <div className="empty">
       <div className="empty-inner">
@@ -22,6 +31,13 @@ export function EmptyState({ onOpen, error }: { onOpen: () => void; error: strin
           <p className="note">UTF-8 · EUC-KR · UTF-16 인코딩 자동 감지</p>
           {error && <p className="error">{error}</p>}
         </div>
+        {recentName && (
+          <button className="recent-btn" onClick={onOpenRecent}>
+            <RecentIcon />
+            <span>최근 문서 열기</span>
+            <span className="recent-name">{recentName}</span>
+          </button>
+        )}
         <dl className="shortcuts">
           {SHORTCUTS.map(([key, label]) => (
             <div key={key}>

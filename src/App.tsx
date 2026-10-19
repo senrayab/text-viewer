@@ -1,13 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState } from './components/EmptyState'
 import { GotoBar } from './components/GotoBar'
-import { CloseIcon, FocusIcon, OpenIcon, SearchIcon, TypeIcon } from './components/Icons'
+import { BackIcon, CloseIcon, FocusIcon, OpenIcon, SearchIcon, TypeIcon } from './components/Icons'
 import { SearchBar } from './components/SearchBar'
 import { SettingsPanel } from './components/SettingsPanel'
 import { Viewer, type MatchRange } from './components/Viewer'
 import { ENCODINGS, decode, detectEncoding, type EncodingChoice } from './lib/decode'
 import { formatBytes, useDebounced, useResolvedTheme, useUpdateAvailable } from './lib/hooks'
 import { findMatches } from './lib/search'
+import {
+  clearEntry,
+  isSessionOpen,
+  loadEntry,
+  reopenRecent,
+  restoreRecent,
+  saveEntry,
+  setSessionOpen,
+  type RecentEntry,
+} from './lib/recent'
 import { loadPosition, loadSettings, savePosition, saveSettings } from './lib/storage'
 import { FONT_SIZE, THEMES, clamp, type Settings } from './settings'
 
@@ -16,6 +26,8 @@ interface Doc {
   name: string
   size: number
   buffer: ArrayBuffer
+  file: File
+  handle?: FileSystemFileHandle
 }
 
 const ACCEPT = '.txt,.text,.log,text/plain'
@@ -52,7 +64,8 @@ export default function App() {
   const [focusMode, setFocusMode] = useState(false)
   const [dragging, setDragging] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ text: string; ms: number } | null>(null)
+  const [recent, setRecent] = useState<RecentEntry>()
   const updateAvailable = useUpdateAvailable()
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -63,29 +76,111 @@ export default function App() {
   const saveTimer = useRef<number>()
   const scrollFrame = useRef(0)
 
-  const showToast = useCallback((message: string) => setToast(message), [])
+  const showToast = useCallback((text: string, ms = 1800) => setToast({ text, ms }), [])
   useEffect(() => {
     if (!toast) return
-    const id = setTimeout(() => setToast(null), 1800)
+    const id = setTimeout(() => setToast(null), toast.ms)
     return () => clearTimeout(id)
   }, [toast])
 
-  const openFile = useCallback(async (file: File) => {
+  const openFile = useCallback(async (file: File, handle?: FileSystemFileHandle) => {
     try {
       const buffer = await file.arrayBuffer()
-      setDoc({ key: `${file.name}:${file.size}:${file.lastModified}`, name: file.name, size: file.size, buffer })
+      setDoc({
+        key: `${file.name}:${file.size}:${file.lastModified}`,
+        name: file.name,
+        size: file.size,
+        buffer,
+        file,
+        handle,
+      })
       setEncodingChoice('auto')
       setError(null)
       setQuery('')
       setSearchOpen(false)
       setGotoOpen(false)
       setProgress(0)
+      setSessionOpen(true)
     } catch {
       setError('파일을 읽을 수 없습니다.')
     }
   }, [])
 
-  const pickFile = useCallback(() => fileInputRef.current?.click(), [])
+  // 지금 보는 문서는 새로고침 복원용으로 항상 저장한다
+  useEffect(() => {
+    if (doc) saveEntry('session', doc.file, doc.buffer, doc.handle)
+  }, [doc])
+
+  // 최근 문서 기억이 켜져 있으면 지금 보는 문서를 저장하고, 꺼지면 저장해 둔 것을 지운다
+  useEffect(() => {
+    if (!settings.rememberRecent) {
+      clearEntry('recent')
+      setRecent(undefined)
+      return
+    }
+    const saved = doc ? saveEntry('recent', doc.file, doc.buffer, doc.handle) : Promise.resolve()
+    saved.then(() => loadEntry('recent')).then(setRecent)
+  }, [doc, settings.rememberRecent])
+
+  // 새로고침 전에 보던 문서가 있으면 다시 연다
+  const [restoring, setRestoring] = useState(isSessionOpen)
+  const restoreStarted = useRef(false)
+  useEffect(() => {
+    if (restoreStarted.current) return
+    restoreStarted.current = true
+    if (!isSessionOpen()) {
+      clearEntry('session')
+      return
+    }
+    loadEntry('session').then(async (entry) => {
+      const restored = entry ? await restoreRecent(entry) : undefined
+      if (restored) await openFile(restored.file, restored.handle)
+      else setSessionOpen(false)
+      setRestoring(false)
+    })
+  }, [openFile])
+
+  const goHome = useCallback(() => {
+    setDoc(null)
+    setSessionOpen(false)
+    clearEntry('session')
+    setSearchOpen(false)
+    setGotoOpen(false)
+    setFocusMode(false)
+    setProgress(0)
+  }, [])
+
+  // 파일 핸들을 받을 수 있는 브라우저에서는 최근 문서로 원본을 다시 열 수 있도록 파일 선택 창을 직접 띄운다
+  const pickFile = useCallback(async () => {
+    if (!window.showOpenFilePicker) {
+      fileInputRef.current?.click()
+      return
+    }
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ description: '텍스트 파일', accept: { 'text/plain': ['.txt', '.text', '.log'] } }],
+      })
+      openFile(await handle.getFile(), handle)
+    } catch {
+      // 선택을 취소한 경우
+    }
+  }, [openFile])
+
+  const openRecent = useCallback(async () => {
+    if (!recent) return
+    const result = await reopenRecent(recent)
+    if ('file' in result) {
+      openFile(result.file, result.handle)
+      return
+    }
+    if (result.error === 'denied') {
+      showToast('파일을 열려면 접근 권한이 필요해요.', 2600)
+      return
+    }
+    showToast('파일을 찾을 수 없어요. 삭제되었거나 다른 곳으로 옮겨졌을 수 있어요.', 3200)
+    clearEntry('recent')
+    setRecent(undefined)
+  }, [recent, openFile, showToast])
 
   // ── 스크롤 · 읽던 위치 ────────────────────────────────
   const scrollToLine = useCallback((line: number, flash: boolean) => {
@@ -293,8 +388,14 @@ export default function App() {
       e.preventDefault()
       depth = 0
       setDragging(false)
+      // 핸들은 drop 이벤트 안에서 바로 요청해야 받을 수 있다
+      const item = e.dataTransfer?.items[0]
+      const handle = item?.kind === 'file' ? item.getAsFileSystemHandle?.() : undefined
       const file = e.dataTransfer?.files[0]
-      if (file) openFile(file)
+      if (!file) return
+      Promise.resolve(handle)
+        .catch(() => null)
+        .then((h) => openFile(file, h?.kind === 'file' ? (h as FileSystemFileHandle) : undefined))
     }
     window.addEventListener('dragenter', onEnter)
     window.addEventListener('dragover', onOver)
@@ -313,6 +414,11 @@ export default function App() {
   return (
     <div className={`app${focusMode ? ' focus' : ''}`}>
       <header className="toolbar">
+        {doc && (
+          <button className="icon-btn back" onClick={goHome} title="처음 화면">
+            <BackIcon />
+          </button>
+        )}
         <div className="title">
           {doc ? (
             <span className="name" title={doc.name}>
@@ -365,7 +471,9 @@ export default function App() {
             />
           </>
         ) : (
-          <EmptyState onOpen={pickFile} error={error} />
+          !restoring && (
+            <EmptyState onOpen={pickFile} recentName={recent?.name} onOpenRecent={openRecent} error={error} />
+          )
         )}
 
         {searchOpen && (
@@ -402,7 +510,7 @@ export default function App() {
         )}
         {toast ? (
           <div className="toast" role="status">
-            {toast}
+            {toast.text}
           </div>
         ) : (
           updateAvailable && (

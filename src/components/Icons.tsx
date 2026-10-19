@@ -1,12 +1,18 @@
 import {
+  ALargeSmall,
   CaseSensitive,
   ChevronDown,
+  ChevronLeft,
   ChevronUp,
   FolderOpen,
+  History,
+  ListOrdered,
   Maximize,
   Minus,
   Plus,
   Search,
+  UnfoldVertical,
+  WrapText,
   X,
   type LucideIcon,
 } from 'lucide-react'
@@ -21,12 +27,20 @@ function icon(Component: LucideIcon, defaultSize: number) {
 }
 
 export const OpenIcon = icon(FolderOpen, 18)
+export const BackIcon = icon(ChevronLeft, 20)
 export const SearchIcon = icon(Search, 18)
 export const TypeIcon = icon(CaseSensitive, 18)
 export const FocusIcon = icon(Maximize, 18)
 export const CloseIcon = icon(X, 18)
 export const CaseIcon = icon(CaseSensitive, 18)
+export const RecentIcon = icon(History, 16)
 export const UpIcon = icon(ChevronUp, 16)
 export const DownIcon = icon(ChevronDown, 16)
 export const MinusIcon = icon(Minus, 16)
 export const PlusIcon = icon(Plus, 16)
+
+// 설정 패널 항목 앞의 아이콘
+export const FontSizeIcon = icon(ALargeSmall, 16)
+export const LineHeightIcon = icon(UnfoldVertical, 16)
+export const LineNumberIcon = icon(ListOrdered, 16)
+export const WrapIcon = icon(WrapText, 16)
