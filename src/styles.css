@@ -10,6 +10,21 @@
   --ui-font: 'Pretendard Variable', Pretendard, Tossface, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
 
+/* 헤더 제목·보기 설정·서재·작품·처음 화면·담기 대화상자는 한 단계(1px) 크게 쓴다.
+   본문 화면의 상태바·검색창·토스트는 위의 기본(작은) 단계를 그대로 쓴다. */
+.toolbar .title,
+.panel,
+.page-scroll,
+.empty,
+.modal {
+  --ui-2xs: 11px;
+  --ui-xs: 12px;
+  --ui-sm: 13px;
+  --ui-md: 14px;
+  --ui-lg: 16px;
+  --ui-xl: 18px;
+}
+
 :root,
 [data-theme='light'] {
   --bg: #fbfbf9;
@@ -20,6 +35,7 @@
   --surface: #ffffff;
   --soft: #f5f5f3;
   --hover: rgba(0, 0, 0, 0.05);
+  --track: rgba(0, 0, 0, 0.1);
   --accent: #2a2a28;
   --mark: rgba(255, 200, 0, 0.35);
   --mark-active: rgba(255, 140, 0, 0.6);
@@ -38,6 +54,7 @@
   --surface: #fbf5e8;
   --soft: #f3ead6;
   --hover: rgba(90, 64, 20, 0.07);
+  --track: rgba(90, 64, 20, 0.14);
   --accent: #4f3f2e;
   --mark: rgba(230, 170, 40, 0.35);
   --mark-active: rgba(215, 115, 20, 0.55);
@@ -56,6 +73,7 @@
   --surface: #1f1f1f;
   --soft: #272727;
   --hover: rgba(255, 255, 255, 0.06);
+  --track: rgba(255, 255, 255, 0.13);
   --accent: #e4e4e0;
   --mark: rgba(255, 200, 0, 0.22);
   --mark-active: rgba(255, 160, 0, 0.55);
@@ -985,7 +1003,7 @@ mark.active {
   height: 4px;
   overflow: hidden;
   border-radius: 2px;
-  background: var(--hover);
+  background: var(--track);
 }
 
 .bar > span {
@@ -1182,7 +1200,7 @@ mark.active {
 }
 
 .book > .bar {
-  height: 3px;
+  height: 2px;
   margin-top: 8px;
 }
 
@@ -1446,7 +1464,7 @@ mark.active {
 
 /* 작품 화면의 진행 막대는 작품 색. 표지가 연한 색이라 같은 색을 더 진하게 쓴다. */
 .tl-body .bar {
-  background: hsl(var(--h) 30% 91%);
+  background: hsl(var(--h) 28% 85%);
 }
 
 .tl-body .bar > span {
@@ -1460,7 +1478,7 @@ mark.active {
 }
 
 [data-theme='dark'] .tl-body .bar {
-  background: hsl(var(--h) 12% 26%);
+  background: hsl(var(--h) 12% 30%);
 }
 
 [data-theme='dark'] .tl-body .bar > span {
@@ -1496,7 +1514,7 @@ mark.active {
 .tl-body .bar {
   flex: 1;
   min-width: 40px;
-  height: 3px;
+  height: 2px;
 }
 
 .tl-state {
