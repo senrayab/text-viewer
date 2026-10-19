@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AddDialog } from './components/AddDialog'
 import { BackupDialog } from './components/BackupDialog'
+import { connectedAccount, isSignedIn, signIn } from './lib/drive'
 import { EmptyState } from './components/EmptyState'
 import { GotoBar } from './components/GotoBar'
 import {
@@ -106,6 +107,7 @@ export default function App() {
   // ── UI 상태 ───────────────────────────────────────────
   const [settingsOpen, setSettingsOpen] = useState(() => loadSessionState<SessionState>()?.panel === 'settings')
   const [backupOpen, setBackupOpen] = useState(() => loadSessionState<SessionState>()?.panel === 'backup')
+  const [backupAuth, setBackupAuth] = useState<Promise<string>>()
   const [searchOpen, setSearchOpen] = useState(false)
   const [gotoOpen, setGotoOpen] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
@@ -784,6 +786,9 @@ export default function App() {
             onChange={updateSetting}
             onClose={closeSettings}
             onOpenBackup={() => {
+              // 연결한 적 있는 계정이면 이 클릭에서 바로 조용히 다시 연결한다
+              const reconnect = connectedAccount() !== null && !isSignedIn() && !!window.google?.accounts?.oauth2
+              setBackupAuth(reconnect ? signIn() : undefined)
               setSettingsOpen(false)
               setBackupOpen(true)
             }}
@@ -843,7 +848,11 @@ export default function App() {
 
       {backupOpen && (
         <BackupDialog
-          onClose={() => setBackupOpen(false)}
+          autoAuth={backupAuth}
+          onClose={() => {
+            setBackupOpen(false)
+            setBackupAuth(undefined)
+          }}
           onRestored={async ({ works, episodes }) => {
             setBackupOpen(false)
             await refreshLibrary()

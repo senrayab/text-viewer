@@ -14,6 +14,7 @@ import {
   ChevronRight,
   ChevronUp,
   Cloud,
+  CircleUserRound,
   Ellipsis,
   FolderOpen,
   History,
@@ -88,4 +89,5 @@ export const ShareIcon = icon(Share, 14)
 
 // 백업
 export const CloudIcon = icon(Cloud, 16)
+export const AccountIcon = icon(CircleUserRound, 16)
 export const ChevronIcon = icon(ChevronRight, 16)

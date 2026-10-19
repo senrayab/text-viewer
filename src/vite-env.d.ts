@@ -41,7 +41,7 @@ interface GoogleTokenResponse {
 }
 
 interface GoogleTokenClient {
-  requestAccessToken(options?: { prompt?: string }): void
+  requestAccessToken(options?: { prompt?: string; login_hint?: string }): void
 }
 
 interface Window {
@@ -54,6 +54,7 @@ interface Window {
           callback: (response: GoogleTokenResponse) => void
           error_callback?: (error: { type?: string }) => void
         }): GoogleTokenClient
+        revoke?(accessToken: string, done: () => void): void
       }
     }
   }

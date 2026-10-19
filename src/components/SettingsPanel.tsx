@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { PRIVACY_URL } from '../config'
+import { connectedAccount, driveConfigured, preloadGoogle } from '../lib/drive'
 import { FONT_SIZE, FONTS, LINE_HEIGHT, THEMES, WIDTHS, clamp, type Settings } from '../settings'
 import {
   ChevronIcon,
@@ -150,6 +151,11 @@ function Toggle({
 export function SettingsPanel({ settings, onChange, onClose, onOpenBackup }: SettingsPanelProps) {
   const ref = useRef<HTMLDivElement>(null)
   const initialScroll = useRef(readScroll())
+
+  // 구글 드라이브를 연결한 적이 있으면, 백업 화면을 누르는 순간 조용히 다시 연결할 수 있도록 미리 불러 둔다
+  useEffect(() => {
+    if (driveConfigured && connectedAccount() !== null) preloadGoogle().catch(() => {})
+  }, [])
 
   // 열릴 때 지난 스크롤 위치로, 닫힐 때(페이지를 떠나는 것 말고 패널을 닫을 때) 기억을 지운다
   useEffect(() => {

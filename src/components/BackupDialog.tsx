@@ -1,23 +1,28 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { PRIVACY_URL } from '../config'
 import { createBackup, restoreBackup, type BackupSummary } from '../lib/backup'
 import {
+  connectedAccount,
   deleteBackup,
+  disconnect,
   downloadBackup,
   driveConfigured,
   findBackup,
   isSignedIn,
+  loadAccountEmail,
   preloadGoogle,
   signIn,
   uploadBackup,
   type DriveBackup,
 } from '../lib/drive'
 import { formatBytes } from '../lib/hooks'
-import { CloseIcon, CloudIcon, TrashIcon } from './Icons'
+import { AccountIcon, CloseIcon, CloudIcon, TrashIcon } from './Icons'
 
 interface BackupDialogProps {
   onClose: () => void
   onRestored: (summary: BackupSummary) => void
+  /** 연결한 적 있는 계정으로 화면을 열 때 이미 요청해 둔 로그인 (버튼을 누른 순간에 시작해야 막히지 않는다) */
+  autoAuth?: Promise<string>
 }
 
 type Busy = 'connect' | 'backup' | 'restore' | 'delete' | null
@@ -45,8 +50,9 @@ function formatDate(iso: string) {
 }
 
 /** 구글 드라이브의 앱 전용 공간에 서재를 백업하고 불러온다 */
-export function BackupDialog({ onClose, onRestored }: BackupDialogProps) {
+export function BackupDialog({ onClose, onRestored, autoAuth }: BackupDialogProps) {
   const [signedIn, setSignedIn] = useState(isSignedIn)
+  const [account, setAccount] = useState(connectedAccount)
   /** undefined: 아직 모름, null: 백업 없음 */
   const [backup, setBackup] = useState<DriveBackup | null>()
   const [busy, setBusy] = useState<Busy>(null)
@@ -57,15 +63,15 @@ export function BackupDialog({ onClose, onRestored }: BackupDialogProps) {
     setBackup((await findBackup()) ?? null)
   }, [])
 
-  useEffect(() => {
-    if (!driveConfigured) return
-    preloadGoogle().catch((e) => setMessage({ text: errorMessage(e), error: true }))
-    if (isSignedIn()) loadInfo().catch((e) => setMessage({ text: errorMessage(e), error: true }))
+  // 연결한 뒤 계정 이메일(처음 한 번)과 마지막 백업을 읽는다
+  const afterConnect = useCallback(async () => {
+    if (!connectedAccount()) setAccount(await loadAccountEmail())
+    else setAccount(connectedAccount())
+    await loadInfo()
   }, [loadInfo])
 
   // 로그인 창은 버튼을 누른 처리 안에서 곧바로 띄워야 막히지 않는다 — 그래서 signIn()을 먼저 부른다
-  const run = (kind: Busy, task: () => Promise<void>) => {
-    const auth = signIn()
+  const run = (kind: Busy, task: () => Promise<void>, auth = signIn()) => {
     setBusy(kind)
     setMessage(undefined)
     auth
@@ -80,7 +86,25 @@ export function BackupDialog({ onClose, onRestored }: BackupDialogProps) {
       .finally(() => setBusy(null))
   }
 
-  const connect = () => run('connect', loadInfo)
+  const connect = () => run('connect', afterConnect)
+
+  const started = useRef(false)
+  useEffect(() => {
+    if (!driveConfigured || started.current) return
+    started.current = true
+    preloadGoogle().catch((e) => setMessage({ text: errorMessage(e), error: true }))
+    if (autoAuth) run('connect', afterConnect, autoAuth)
+    else if (isSignedIn()) afterConnect().catch((e) => setMessage({ text: errorMessage(e), error: true }))
+    // 화면을 열 때 한 번만
+  }, [])
+
+  const unlink = () => {
+    disconnect()
+    setAccount(null)
+    setSignedIn(false)
+    setBackup(undefined)
+    setMessage({ text: '구글 계정 연결을 해제했어요. 드라이브의 백업은 그대로 남아 있어요.' })
+  }
 
   const backupNow = () =>
     run('backup', async () => {
@@ -113,7 +137,7 @@ export function BackupDialog({ onClose, onRestored }: BackupDialogProps) {
   }
 
   // 백업이 있으면 날짜와 용량을 한 줄씩 보여준다
-  let status: ReactNode = '연결 전'
+  let status: ReactNode = account !== null ? '연결하면 보여요' : '연결 전'
   if (signedIn) {
     if (backup === undefined) status = '확인 중…'
     else if (backup === null) status = '아직 없어요'
@@ -144,18 +168,38 @@ export function BackupDialog({ onClose, onRestored }: BackupDialogProps) {
             <div className="card">
               <div className="row">
                 <span className="row-label">
-                  <span className="chip chip-sky">
-                    <CloudIcon />
+                  <span className="chip chip-lavender">
+                    <AccountIcon />
                   </span>
-                  마지막 백업
+                  계정
                 </span>
-                {signedIn ? (
-                  <span className="backup-status">{status}</span>
+                {account ? (
+                  <span className="backup-account">
+                    <span className="email">{account}</span>
+                    {signedIn ? (
+                      <button className="text-btn" onClick={unlink} disabled={!!busy}>
+                        연결 해제
+                      </button>
+                    ) : (
+                      <button className="text-btn" onClick={connect} disabled={!!busy}>
+                        {busy === 'connect' ? '연결 중…' : '다시 연결'}
+                      </button>
+                    )}
+                  </span>
                 ) : (
                   <button className="pill small" onClick={connect} disabled={!!busy}>
                     {busy === 'connect' ? '연결 중…' : '구글 계정 연결'}
                   </button>
                 )}
+              </div>
+              <div className="row">
+                <span className="row-label">
+                  <span className="chip chip-sky">
+                    <CloudIcon />
+                  </span>
+                  마지막 백업
+                </span>
+                <span className="backup-status">{status}</span>
               </div>
               {backup && (
                 <button className="row action danger" onClick={remove} disabled={!!busy}>

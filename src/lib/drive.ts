@@ -7,6 +7,8 @@ import { GOOGLE_CLIENT_ID } from '../config'
 const SCOPE = 'https://www.googleapis.com/auth/drive.appdata'
 const FILE_NAME = 'text-viewer-backup.json.gz'
 const API = 'https://www.googleapis.com'
+/** 연결한 구글 계정 이메일 — 다음에 계정을 다시 묻지 않고 조용히 연결하는 데 쓴다 (이 기기에만 저장) */
+const ACCOUNT_KEY = 'text-viewer:drive-account'
 
 export const driveConfigured = !!GOOGLE_CLIENT_ID
 
@@ -29,6 +31,24 @@ export function preloadGoogle() {
   return gisPromise
 }
 
+/** 연결한 적 있는 계정 이메일. 연결한 적이 없으면 null, 이메일을 아직 모르면 빈 문자열 */
+export function connectedAccount(): string | null {
+  try {
+    return localStorage.getItem(ACCOUNT_KEY)
+  } catch {
+    return null
+  }
+}
+
+function rememberAccount(email: string | null) {
+  try {
+    if (email === null) localStorage.removeItem(ACCOUNT_KEY)
+    else localStorage.setItem(ACCOUNT_KEY, email)
+  } catch {
+    // 무시
+  }
+}
+
 export function isSignedIn() {
   return !!token && token.expires > Date.now() + 60_000
 }
@@ -36,6 +56,7 @@ export function isSignedIn() {
 /**
  * 접근 토큰을 받는다. 브라우저가 팝업을 막지 않도록 버튼을 누른 처리 안에서 곧바로 불러야 한다
  * (그래서 스크립트를 기다리지 않고, 아직 안 불러졌으면 실패로 돌려준다).
+ * 한 번 연결한 계정이 있으면 계정 선택 없이 그 계정으로 조용히 받는다.
  */
 export function signIn(): Promise<string> {
   if (token && isSignedIn()) return Promise.resolve(token.value)
@@ -55,12 +76,30 @@ export function signIn(): Promise<string> {
           return
         }
         token = { value: response.access_token, expires: Date.now() + Number(response.expires_in) * 1000 }
+        if (connectedAccount() === null) rememberAccount('')
         resolve(response.access_token)
       },
       error_callback: (error) => reject(new Error(error.type ?? 'denied')),
     })
-    client.requestAccessToken()
+    const account = connectedAccount()
+    client.requestAccessToken(account === null ? undefined : { prompt: '', login_hint: account || undefined })
   })
+}
+
+/** 연결한 계정의 이메일을 드라이브에서 읽어 기억해 둔다 */
+export async function loadAccountEmail() {
+  const res = await api('/drive/v3/about?fields=user(emailAddress)')
+  const email: string = (await res.json()).user?.emailAddress ?? ''
+  rememberAccount(email)
+  return email
+}
+
+/** 연결 해제 — 이 기기에 기억한 계정을 지우고, 구글에 준 접근 권한도 거둔다 */
+export function disconnect() {
+  const value = token?.value
+  token = null
+  rememberAccount(null)
+  if (value) window.google?.accounts?.oauth2?.revoke?.(value, () => {})
 }
 
 async function api(path: string, init: RequestInit = {}) {
