@@ -859,6 +859,22 @@ mark.active {
   transform: scale(1.04);
 }
 
+/* 화면 오른쪽 아래에 떠 있는 버튼 */
+.fab {
+  position: absolute;
+  right: 20px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 15;
+  width: 56px;
+  height: 56px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* 떠 있는 버튼에 마지막 줄이 가리지 않도록 */
+.page.library {
+  padding-bottom: 112px;
+}
+
 .round-btn.dark {
   border-color: transparent;
   background: var(--fg);
@@ -1708,7 +1724,7 @@ select.text-input {
   border-radius: 14px;
   background: rgba(24, 24, 27, 0.96);
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.45;
   text-align: center;

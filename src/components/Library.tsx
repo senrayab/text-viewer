@@ -49,93 +49,89 @@ export function Library({ items, positions, onOpen, onDetail, onAdd }: LibraryPr
   })
 
   return (
-    <div className="page-scroll">
-      <div className="page library">
-        <header className="page-head">
-          <div>
-            <h1>내 서재</h1>
-            <p>{items.length ? `${items.length}개의 작품` : '아직 담은 작품이 없어요'}</p>
-          </div>
-          <button className="round-btn dark" onClick={onAdd} title="작품 담기">
-            <PlusIcon size={20} />
-          </button>
-        </header>
+    <>
+      <div className="page-scroll">
+        <div className="page library">
+          <InstallHint />
 
-        <InstallHint />
-
-        {items.length === 0 ? (
-          <div className="lib-empty">
-            <p>
-              txt 파일을 담아두면 언제든 여기서 꺼내 볼 수 있어요.
-              <br />
-              여러 편으로 된 글은 파일 이름으로 묶어드려요.
-            </p>
-            <button className="pill dark" onClick={onAdd}>
-              첫 작품 담기
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="chips" role="tablist">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.value}
-                  role="tab"
-                  aria-selected={filter === f.value}
-                  className={`chip-btn${filter === f.value ? ' on' : ''}`}
-                  onClick={() => setFilter(f.value)}
-                >
-                  {f.label}
-                </button>
-              ))}
+          {items.length === 0 ? (
+            <div className="lib-empty">
+              <p>
+                txt 파일을 담아두면 언제든 여기서 꺼내 볼 수 있어요.
+                <br />
+                여러 편으로 된 글은 파일 이름으로 묶어드려요.
+              </p>
+              <button className="pill dark" onClick={onAdd}>
+                첫 작품 담기
+              </button>
             </div>
+          ) : (
+            <>
+              <div className="chips" role="tablist">
+                {FILTERS.map((f) => (
+                  <button
+                    key={f.value}
+                    role="tab"
+                    aria-selected={filter === f.value}
+                    className={`chip-btn${filter === f.value ? ' on' : ''}`}
+                    onClick={() => setFilter(f.value)}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
 
-            {visible.length === 0 ? (
-              <p className="lib-none">이 조건에 맞는 작품이 없어요.</p>
-            ) : (
-              <ul className="shelf">
-                {visible.map(({ summary: s, progress }) => {
-                  const count = s.episodes.length
-                  const sub =
-                    count > 1
-                      ? `${count}편 · ${progress.done ? '다 읽음' : progress.started ? `${progress.percent}%` : '읽기 전'}`
-                      : episodeStatus(positions[episodeKey(s.episodes[0])]).label
-                  return (
-                    <li key={s.work.id} className="book" style={{ '--h': workHue(s.work) } as CSSProperties}>
-                      <button className="book-cover" onClick={() => onOpen(s)} aria-label={`${s.work.title} 열기`}>
-                        <span className="book-stage" />
-                        <Cover title={s.work.title} image={s.work.cover} />
-                        {count > 1 && <span className="badge">{count}편</span>}
-                      </button>
-                      <div className="book-meta">
-                        <div className="book-text">
-                          <div className="book-title">
-                            {s.work.id === recentId && (
-                              <span className="recent-dot" title="최근에 읽은 작품">
-                                <RecentDotIcon />
-                              </span>
-                            )}
-                            <span>{s.work.title}</span>
-                          </div>
-                          <div className="book-sub">{sub}</div>
-                        </div>
-                        <button className="icon-btn small" onClick={() => onDetail(s)} title="작품 정보">
-                          <MoreIcon />
+              {visible.length === 0 ? (
+                <p className="lib-none">이 조건에 맞는 작품이 없어요.</p>
+              ) : (
+                <ul className="shelf">
+                  {visible.map(({ summary: s, progress }) => {
+                    const count = s.episodes.length
+                    const sub =
+                      count > 1
+                        ? `${count}편 · ${progress.done ? '다 읽음' : progress.started ? `${progress.percent}%` : '읽기 전'}`
+                        : episodeStatus(positions[episodeKey(s.episodes[0])]).label
+                    return (
+                      <li key={s.work.id} className="book" style={{ '--h': workHue(s.work) } as CSSProperties}>
+                        <button className="book-cover" onClick={() => onOpen(s)} aria-label={`${s.work.title} 열기`}>
+                          <span className="book-stage" />
+                          <Cover title={s.work.title} image={s.work.cover} />
+                          {count > 1 && <span className="badge">{count}편</span>}
                         </button>
-                      </div>
-                      {progress.started && (
-                        <span className="bar">
-                          <span style={{ width: `${progress.done ? 100 : progress.percent}%` }} />
-                        </span>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </>
-        )}
+                        <div className="book-meta">
+                          <div className="book-text">
+                            <div className="book-title">
+                              {s.work.id === recentId && (
+                                <span className="recent-dot" title="최근에 읽은 작품">
+                                  <RecentDotIcon />
+                                </span>
+                              )}
+                              <span>{s.work.title}</span>
+                            </div>
+                            <div className="book-sub">{sub}</div>
+                          </div>
+                          <button className="icon-btn small" onClick={() => onDetail(s)} title="작품 정보">
+                            <MoreIcon />
+                          </button>
+                        </div>
+                        {progress.started && (
+                          <span className="bar">
+                            <span style={{ width: `${progress.done ? 100 : progress.percent}%` }} />
+                          </span>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+      {/* 작품 담기: 오른쪽 아래에 떠 있는 버튼 */}
+      <button className="round-btn dark fab" onClick={onAdd} title="작품 담기">
+        <PlusIcon size={22} />
+      </button>
+    </>
   )
 }
