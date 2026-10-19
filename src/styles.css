@@ -1,4 +1,11 @@
 :root {
+  /* 콘텐츠(본문)를 뺀 UI 글자 크기 단계. 작은 크기를 기준으로 쓴다. */
+  --ui-2xs: 10px;
+  --ui-xs: 11px;
+  --ui-sm: 12px;
+  --ui-md: 13px;
+  --ui-lg: 15px;
+  --ui-xl: 17px;
   /* Tossface는 반드시 본문 글꼴 뒤에 둔다 — 앞에 두면 Chrome이 숫자까지 Tossface로 그린다 */
   --ui-font: 'Pretendard Variable', Pretendard, Tossface, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
@@ -94,7 +101,7 @@ select {
 
 kbd {
   font-family: inherit;
-  font-size: 11px;
+  font-size: var(--ui-2xs);
   line-height: 1;
   padding: 3px 6px;
   border: 1px solid var(--border);
@@ -135,7 +142,7 @@ kbd {
 .title .name,
 .title .brand {
   display: block;
-  font-size: 14px;
+  font-size: var(--ui-md);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -159,7 +166,7 @@ kbd {
   align-items: center;
   gap: 14px;
   padding: 0 16px;
-  font-size: 11px;
+  font-size: var(--ui-xs);
   color: var(--muted);
   border-top: 1px solid var(--border);
   font-variant-numeric: tabular-nums;
@@ -242,7 +249,7 @@ kbd {
   padding: 11px 22px;
   background: var(--fg);
   color: var(--bg);
-  font-size: 14px;
+  font-size: var(--ui-md);
   font-weight: 500;
   cursor: pointer;
   transition: opacity 0.12s;
@@ -392,7 +399,7 @@ mark.active {
   background: transparent;
   color: var(--fg);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--ui-md);
 }
 
 .floating input::placeholder {
@@ -403,7 +410,7 @@ mark.active {
   min-width: 64px;
   padding-right: 6px;
   text-align: right;
-  font-size: 12px;
+  font-size: var(--ui-xs);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -435,7 +442,7 @@ mark.active {
   border: 1px solid var(--border);
   border-radius: 22px;
   box-shadow: var(--shadow);
-  font-size: 14px;
+  font-size: var(--ui-md);
   scrollbar-width: thin;
   scrollbar-color: var(--faint) transparent;
   animation: pop 0.14s ease-out;
@@ -443,14 +450,14 @@ mark.active {
 
 .panel-head h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--ui-xl);
   font-weight: 700;
   letter-spacing: -0.04em;
 }
 
 .panel-head p {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: var(--ui-sm);
   color: var(--muted);
 }
 
@@ -461,7 +468,7 @@ mark.active {
 }
 
 .preview .eyebrow {
-  font-size: 12px;
+  font-size: var(--ui-xs);
   color: var(--muted);
 }
 
@@ -474,7 +481,7 @@ mark.active {
 
 .section h3 {
   margin: 0 0 10px;
-  font-size: 13px;
+  font-size: var(--ui-sm);
   font-weight: 600;
 }
 
@@ -514,7 +521,7 @@ mark.active {
 }
 
 .tile-label {
-  font-size: 12px;
+  font-size: var(--ui-xs);
   color: var(--muted);
 }
 
@@ -577,7 +584,7 @@ mark.active {
   border-radius: 9px;
   background: transparent;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--ui-sm);
   cursor: pointer;
 }
 
@@ -645,7 +652,7 @@ mark.active {
 
 .row kbd {
   margin-left: 2px;
-  font-size: 10px;
+  font-size: var(--ui-2xs);
   padding: 2px 5px;
 }
 
@@ -703,7 +710,8 @@ mark.active {
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 24px;
+  /* 위 툴바(52px)만큼 아래 여백을 더 줘서 화면 전체 기준으로 가운데에 보이게 한다 */
+  padding: 24px 24px 76px;
   overflow: auto;
 }
 
@@ -721,20 +729,20 @@ mark.active {
 
 .drop-zone h1 {
   margin: 0 0 8px;
-  font-size: 20px;
+  font-size: var(--ui-xl);
   font-weight: 600;
   letter-spacing: -0.035em;
 }
 
 .drop-zone p {
   margin: 0 0 20px;
-  font-size: 14px;
+  font-size: var(--ui-md);
   color: var(--muted);
 }
 
 .drop-zone .note {
   margin: 24px 0 0;
-  font-size: 12px;
+  font-size: var(--ui-xs);
 }
 
 .drop-zone .error {
@@ -752,7 +760,7 @@ mark.active {
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface);
-  font-size: 14px;
+  font-size: var(--ui-md);
   text-align: left;
   cursor: pointer;
   transition: background-color 0.12s;
@@ -775,7 +783,7 @@ mark.active {
   white-space: nowrap;
   text-align: right;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--ui-sm);
 }
 
 .shortcuts {
@@ -784,7 +792,7 @@ mark.active {
   gap: 10px 24px;
   margin: 32px 0 0;
   padding: 0 12px;
-  font-size: 12px;
+  font-size: var(--ui-xs);
   color: var(--muted);
 }
 
@@ -828,14 +836,14 @@ mark.active {
 /* 보기 설정 패널 제목(.panel-head)과 같은 크기 */
 .page-head h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--ui-xl);
   font-weight: 700;
   letter-spacing: -0.04em;
 }
 
 .page-head p {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: var(--ui-sm);
   color: var(--muted);
 }
 
@@ -889,7 +897,7 @@ mark.active {
   border-radius: 999px;
   background: var(--surface);
   color: var(--fg);
-  font-size: 13px;
+  font-size: var(--ui-sm);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -912,7 +920,7 @@ mark.active {
 
 .pill.small {
   padding: 6px 14px;
-  font-size: 12px;
+  font-size: var(--ui-xs);
 }
 
 .chips {
@@ -931,7 +939,7 @@ mark.active {
   border-radius: 999px;
   background: var(--soft);
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--ui-sm);
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.12s, color 0.12s;
@@ -961,7 +969,7 @@ mark.active {
   border: 0;
   background: none;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--ui-sm);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -990,7 +998,7 @@ mark.active {
 
 .primary.small {
   padding: 7px 14px;
-  font-size: 13px;
+  font-size: var(--ui-sm);
 }
 
 .ghost {
@@ -998,7 +1006,7 @@ mark.active {
   border-radius: 999px;
   padding: 10px 18px;
   background: var(--soft);
-  font-size: 14px;
+  font-size: var(--ui-md);
   cursor: pointer;
 }
 
@@ -1019,14 +1027,14 @@ mark.active {
 
 .lib-empty p {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--ui-md);
   line-height: 1.7;
   color: var(--muted);
 }
 
 .lib-none {
   margin: 8px 0;
-  font-size: 14px;
+  font-size: var(--ui-md);
   color: var(--muted);
 }
 
@@ -1046,13 +1054,13 @@ mark.active {
 
 .hint-body strong {
   display: block;
-  font-size: 14px;
+  font-size: var(--ui-md);
   font-weight: 600;
 }
 
 .hint-body p {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: var(--ui-sm);
   line-height: 1.6;
   color: var(--muted);
 }
@@ -1120,7 +1128,7 @@ mark.active {
   border-radius: 999px;
   background: rgba(24, 24, 27, 0.78);
   color: #fff;
-  font-size: 11px;
+  font-size: var(--ui-xs);
   font-weight: 600;
 }
 
@@ -1140,7 +1148,7 @@ mark.active {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 14px;
+  font-size: var(--ui-md);
   font-weight: 600;
 }
 
@@ -1165,7 +1173,7 @@ mark.active {
 
 .book-sub {
   margin-top: 2px;
-  font-size: 12px;
+  font-size: var(--ui-xs);
   color: var(--muted);
 }
 
@@ -1250,7 +1258,7 @@ mark.active {
 
 .work-info h1 {
   margin: 0;
-  font-size: 19px;
+  font-size: var(--ui-xl);
   font-weight: 700;
   letter-spacing: -0.045em;
   line-height: 1.2;
@@ -1269,14 +1277,14 @@ mark.active {
   padding: 3px 9px;
   border-radius: 999px;
   background: var(--soft);
-  font-size: 11px;
+  font-size: var(--ui-xs);
   color: var(--muted);
   white-space: nowrap;
 }
 
 .stat b {
   margin-right: 2px;
-  font-size: 13px;
+  font-size: var(--ui-sm);
   font-weight: 700;
   color: var(--fg);
 }
@@ -1296,7 +1304,7 @@ mark.active {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
-  font-size: 14px;
+  font-size: var(--ui-md);
   outline: none;
 }
 
@@ -1306,7 +1314,7 @@ mark.active {
 
 .title-input {
   height: 36px;
-  font-size: 16px;
+  font-size: var(--ui-lg);
   font-weight: 600;
 }
 
@@ -1315,7 +1323,7 @@ mark.active {
   padding: 0;
   border: 0;
   background: none;
-  font-size: 14px;
+  font-size: var(--ui-md);
   text-align: left;
   cursor: pointer;
 }
@@ -1481,7 +1489,7 @@ mark.active {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: var(--ui-md);
   font-weight: 600;
 }
 
@@ -1495,7 +1503,7 @@ mark.active {
   flex: none;
   min-width: 40px;
   text-align: right;
-  font-size: 12px;
+  font-size: var(--ui-xs);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -1509,7 +1517,7 @@ mark.active {
   gap: 14px;
   margin-top: 56px;
   font-family: var(--ui-font);
-  font-size: 13px;
+  font-size: var(--ui-sm);
   letter-spacing: -0.025em;
   color: var(--muted);
 }
@@ -1532,7 +1540,7 @@ mark.active {
   border-radius: 12px;
   background: var(--surface);
   color: var(--fg);
-  font-size: 14px;
+  font-size: var(--ui-md);
   font-weight: 600;
   text-align: left;
   cursor: pointer;
@@ -1545,7 +1553,7 @@ mark.active {
 
 .next-ep small {
   margin-right: 6px;
-  font-size: 13px;
+  font-size: var(--ui-sm);
   font-weight: 400;
   color: var(--muted);
 }
@@ -1575,7 +1583,7 @@ mark.active {
   border-radius: 22px;
   background: var(--surface);
   box-shadow: var(--shadow);
-  font-size: 14px;
+  font-size: var(--ui-md);
   animation: pop 0.16s ease-out;
 }
 
@@ -1594,7 +1602,7 @@ mark.active {
 
 .group-files {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--ui-sm);
   color: var(--muted);
 }
 
@@ -1651,7 +1659,7 @@ select.text-input {
   .badge {
     right: 5px;
     padding: 2px 6px;
-    font-size: 10px;
+    font-size: var(--ui-2xs);
   }
 
   .book-meta {
@@ -1659,20 +1667,16 @@ select.text-input {
   }
 
   .book-title {
-    font-size: 13px;
+    font-size: var(--ui-sm);
   }
 
   .book-sub {
-    font-size: 11px;
+    font-size: var(--ui-xs);
   }
 
 
   .work-cover {
     width: 56px;
-  }
-
-  .work-info h1 {
-    font-size: 17px;
   }
 }
 
@@ -1694,7 +1698,7 @@ select.text-input {
   place-items: center;
   border: 2px dashed var(--accent);
   border-radius: 18px;
-  font-size: 16px;
+  font-size: var(--ui-lg);
   color: var(--fg);
 }
 
@@ -1724,7 +1728,7 @@ select.text-input {
   border-radius: 14px;
   background: rgba(24, 24, 27, 0.96);
   color: #fff;
-  font-size: 12px;
+  font-size: var(--ui-sm);
   font-weight: 600;
   line-height: 1.45;
   text-align: center;
