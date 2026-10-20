@@ -83,7 +83,8 @@
 
 [data-theme='dark'] {
   --bg: #111315;
-  --fg: #e4e6e8;
+  /* 순백에 가까우면 눈부시므로 대비를 약 12.7:1로 낮춘다 (WCAG AAA 7:1 이상 유지) */
+  --fg: #d2d5d8;
   --muted: #8b929a;
   --faint: #4a4f55;
   --border: #24282c;

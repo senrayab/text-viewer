@@ -19,7 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   font: 'sans',
   fontSize: 16,
   lineHeight: 1.7,
-  width: 'normal',
+  width: 'wide',
   lineNumbers: false,
   wrap: true,
   rememberRecent: true,
