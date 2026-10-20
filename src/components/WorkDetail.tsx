@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
   continueEpisode,
   episodeKey,
+  episodeName,
   episodeStatus,
   workProgress,
   type Episode,
@@ -123,6 +124,14 @@ export function WorkDetail({
   return (
     <div className="page-scroll">
       <div className="page work" style={style}>
+        {/* 스크롤해도 오른쪽 위에 떠 있어서, 내려가 있다가도 바로 편집할 수 있다 */}
+        <button
+          className={`round-btn hero-edit${editing ? ' dark' : ''}`}
+          onClick={() => setEditing((v) => !v)}
+          title={editing ? '편집 끝내기' : '편집'}
+        >
+          {editing ? <EditDoneIcon /> : <EditIcon />}
+        </button>
         <header className="work-hero">
           <div className="work-cover">
             <Cover title={work.title} image={work.cover} size="sm" />
@@ -160,13 +169,6 @@ export function WorkDetail({
                     : ''}
             </p>
           </div>
-          <button
-            className={`round-btn hero-edit${editing ? ' dark' : ''}`}
-            onClick={() => setEditing((v) => !v)}
-            title={editing ? '편집 끝내기' : '편집'}
-          >
-            {editing ? <EditDoneIcon /> : <EditIcon />}
-          </button>
         </header>
 
         {editing && (
@@ -278,7 +280,7 @@ export function WorkDetail({
                     <span className="tl-icon">
                       {status.finished ? <DoneIcon /> : status.started ? <ReadingIcon /> : <UnreadIcon />}
                     </span>
-                    <span className="tl-title">{e.title}</span>
+                    <span className="tl-title">{episodeName(e.title, work.title)}</span>
                     <span className="bar">
                       <span style={{ width: `${status.percent}%` }} />
                     </span>

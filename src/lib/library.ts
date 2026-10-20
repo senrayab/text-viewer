@@ -79,17 +79,20 @@ const COMPLETE_PATTERN = new RegExp(
   'i',
 )
 
-/** 끝에 붙은 나뉜 편 표시: "상", "(하)", "上", "전편" … */
+/** 끝에 붙은 나뉜 편 표시: "상", "(중상)", "上", "전편" … — 상 · 중상 · 중 · 중하 · 하 순서 */
+const PART_WORDS = '중상|중하|상|중|하|上|中|下|전편|후편|전|후|前|後'
 const PART_PATTERN = new RegExp(
-  String.raw`^(.+?)(?:${SEP}*[(\[]\s*(상|중|하|上|中|下|전편|후편|전|후|前|後)\s*[)\]]|${SEP}+(상|중|하|上|中|下|전편|후편|전|후|前|後))$`,
+  String.raw`^(.+?)(?:${SEP}*[(\[]\s*(${PART_WORDS})\s*[)\]]|${SEP}+(${PART_WORDS}))$`,
 )
 const PART_RANK: Record<string, [number, string]> = {
   상: [1, '상'],
   上: [1, '상'],
-  중: [2, '중'],
-  中: [2, '중'],
-  하: [3, '하'],
-  下: [3, '하'],
+  중상: [2, '중상'],
+  중: [3, '중'],
+  中: [3, '중'],
+  중하: [4, '중하'],
+  하: [5, '하'],
+  下: [5, '하'],
   전: [1, '전'],
   전편: [1, '전편'],
   前: [1, '전'],
@@ -98,9 +101,13 @@ const PART_RANK: Record<string, [number, string]> = {
   後: [2, '후'],
 }
 
-/** 프롤로그·에필로그·외전 (뒤에 번호가 붙을 수 있다): "외전 2", "番外1", "(外)", "에필로그" … */
+/** 프롤로그·에필로그·외전 (뒤에 번호가 붙을 수 있다): "외전 2", "番外1", "(外)", "제목 +", "에필로그" … */
 const SPECIAL_PATTERN = new RegExp(
-  String.raw`^(.+?)${SEP}*[(\[]?\s*(프롤로그|서장|序章|序|에필로그|후기|외전|番外|特別編|특별편|外|외)${SEP}*(\d+)?\s*(?:화|편)?\s*[)\]]?$`,
+  String.raw`^(.+?)${SEP}*[(\[]?\s*(프롤로그|서장|序章|序|에필로그|후기|외전|番外|特別編|특별편|外|외|\+)${SEP}*(\d+)?\s*(?:화|편)?\s*[)\]]?$`,
+)
+/** 외전 뒤에 부제가 붙은 이름: "제목 외전 브로큰 하트", "제목 외전2 스물" — 한 글자 표시(외·外·+)는 제목 속 낱말과 헷갈려 뺀다 */
+const SPECIAL_TITLED_PATTERN = new RegExp(
+  String.raw`^(.+?)${SEP}+(프롤로그|서장|序章|에필로그|후기|외전|番外|特別編|특별편)${SEP}*(\d+)?\s*(?:화|편)?${SEP}+(.+)$`,
 )
 const SPECIAL_KIND: Record<string, [EpisodeKind, string]> = {
   프롤로그: ['prologue', '프롤로그'],
@@ -115,17 +122,19 @@ const SPECIAL_KIND: Record<string, [EpisodeKind, string]> = {
   특별편: ['side', '특별편'],
   外: ['side', '외전'],
   외: ['side', '외전'],
+  '+': ['side', '외전'],
 }
 
-/** 끝에 붙은 번호: "3화", "_003", "제3화", "(5)" … */
-const NUMBER_PATTERN = /^(.*?)[\s_\-.·[(]*(?:제\s*)?(\d+)\s*(화|편|권|부|장|회)?[\s\])]*$/
+/** 끝에 붙은 번호: "3화", "_003", "제3화", "(5)", "9.5" … */
+const NUMBER_PATTERN = /^(.*?)[\s_\-.·[(]*(?:제\s*)?(\d+(?:\.\d+)?)\s*(화|편|권|부|장|회)?[\s\])]*$/
 
 function cleanBase(text: string) {
   return text.replace(/^[\s[(]+|[\s_\-.·[(\])]+$/g, '').trim()
 }
 
+// 9.5편처럼 소수 번호와 상·중상·중·중하·하(1~5)가 섞여도 겹치지 않게 자리를 넉넉히 둔다
 function orderOf(kind: EpisodeKind, number = 0, part = 0) {
-  return KIND_RANK[kind] * 1_000_000 + number * 10 + part
+  return KIND_RANK[kind] * 100_000_000 + Math.round(number * 1000) + part
 }
 
 /** 파일명에서 작품 이름과 편 정보를 뽑는다 */
@@ -169,6 +178,21 @@ export function parseEpisodeName(fileName: string): ParsedName {
 
   // 4. 번호
   const numbered = rest.match(NUMBER_PATTERN)
+  // (번호가 없으면 4-1. 부제가 붙은 외전 등)
+  const titled = numbered && cleanBase(numbered[1]) ? null : rest.match(SPECIAL_TITLED_PATTERN)
+  if (titled && cleanBase(titled[1])) {
+    const [kind, word] = SPECIAL_KIND[titled[2]] ?? ['side', titled[2]]
+    const number = titled[3] ? Number(titled[3]) : undefined
+    return {
+      base: cleanBase(titled[1]),
+      kind,
+      number,
+      part,
+      complete,
+      label: `${word}${number !== undefined ? ` ${number}` : ''} ${titled[4].trim()}${tail}`,
+      order: orderOf(kind, number, part),
+    }
+  }
   if (numbered && cleanBase(numbered[1])) {
     const number = Number(numbered[2])
     return {
@@ -196,6 +220,7 @@ export function parseEpisodeName(fileName: string): ParsedName {
 /**
  * 파일명을 한꺼번에 읽는다. 1편에는 번호를 안 붙이고 2편부터 "제목 (2)", "제목 (3)"처럼 붙이는 경우가 많아서,
  * 번호 없는 "제목"이 같은 이름의 2편 이후와 함께 있으면(1편은 없을 때) 그 파일을 1편으로 본다.
+ * 2편 이후는 없고 외전 등만 함께 있으면 번호 없는 "제목"은 본편으로 본다.
  * known: 함께 따져 볼 다른 파일명(이미 서재에 있는 편 등) — 결과에는 들어가지 않는다
  */
 export function parseEpisodeNames(names: string[], known: string[] = []): ParsedName[] {
@@ -203,7 +228,10 @@ export function parseEpisodeNames(names: string[], known: string[] = []): Parsed
   // 작품 이름 → 2편 이후에 쓴 단위(화·편 …), 1편이 이미 있는 작품 이름
   const later = new Map<string, string>()
   const hasFirst = new Set<string>()
+  // 작품 이름 → 번호·종류를 읽어 낸 다른 편이 있는지
+  const hasSiblings = new Set<string>()
   for (const p of [...parsed, ...known.map(parseEpisodeName)]) {
+    if (p.kind) hasSiblings.add(p.base.toLowerCase())
     if (p.kind !== 'main' || p.number === undefined) continue
     const key = p.base.toLowerCase()
     if (p.number === 1) hasFirst.add(key)
@@ -211,9 +239,19 @@ export function parseEpisodeNames(names: string[], known: string[] = []): Parsed
   }
   return parsed.map((p) => {
     const key = p.base.toLowerCase()
-    if (p.kind || !later.has(key) || hasFirst.has(key)) return p
-    return { base: p.base, kind: 'main', number: 1, label: `1${later.get(key)}`, order: orderOf('main', 1) }
+    if (p.kind || hasFirst.has(key)) return p
+    if (later.has(key)) return { base: p.base, kind: 'main', number: 1, label: `1${later.get(key)}`, order: orderOf('main', 1) }
+    if (hasSiblings.has(key)) return { base: p.base, kind: 'main', label: '본편', order: orderOf('main', 0) }
+    return p
   })
+}
+
+/** 편 이름을 보여줄 때: 작품 이름으로 시작하면 그 부분은 떼어 짧게 ("과속 주의 외전 브로큰 하트" → "외전 브로큰 하트") */
+export function episodeName(title: string, workTitle: string) {
+  const work = workTitle.trim()
+  if (!work || !title.toLowerCase().startsWith(work.toLowerCase())) return title
+  const rest = title.slice(work.length).replace(/^[\s_\-.·]+/, '').trim()
+  return rest || title
 }
 
 const collator = new Intl.Collator('ko', { numeric: true })
@@ -295,11 +333,13 @@ export async function listLibrary(): Promise<WorkSummary[]> {
       .then((cover) => (cover.size < original.size ? patchWork(w.id, { cover }) : undefined))
       .catch(() => {})
   }
-  // 1편으로 보게 된 번호 없는 편은, 이름을 직접 바꾸지 않았다면 편 이름도 "1편"으로 고쳐 둔다
+  // 규칙이 바뀌어 편 이름이 달라졌으면("1편", "본편", "외전 부제" 등) 고쳐 둔다.
+  // 담을 때 정해진 이름(파일명을 읽은 결과나 파일명 그대로)일 때만 고치고, 그 밖의 이름은 그대로 둔다.
   for (const list of byWork.values()) {
     const parsed = parseEpisodeNames(list.map((e) => e.fileName))
     list.forEach((e, i) => {
-      if (parsed[i].label === e.title || e.title !== parseEpisodeName(e.fileName).label) return
+      const plain = e.fileName.replace(/\.[^.]+$/, '').trim()
+      if (parsed[i].label === e.title || (e.title !== parseEpisodeName(e.fileName).label && e.title !== plain)) return
       e.title = parsed[i].label
       patchEpisode(e.id, { title: e.title }).catch(() => {})
     })

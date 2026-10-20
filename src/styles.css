@@ -1035,17 +1035,13 @@ mark.active {
 }
 
 .page {
+  --page-gap: 24px;
   max-width: 880px;
   margin: 0 auto;
   padding: 36px 24px 64px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-}
-
-/* 서재 머리: 편집 버튼(.hero-edit)을 작품 화면과 같은 자리(오른쪽 위)에 둔다 */
-.page-head {
-  position: relative;
+  gap: var(--page-gap);
 }
 
 .page-head p {
@@ -1622,12 +1618,16 @@ mark.active {
   color: var(--muted);
 }
 
+/* 서재·작품의 편집 버튼: 처음에는 머리 오른쪽 위, 스크롤하면 화면 위에 붙어 따라온다.
+   자리를 차지하지 않도록 아래 여백을 자기 높이 + 칸 사이만큼 당긴다. */
 .hero-edit {
-  position: absolute;
-  top: 4px;
-  right: 0;
+  position: sticky;
+  top: 12px;
+  z-index: 12;
+  align-self: flex-end;
   width: 34px;
   height: 34px;
+  margin: 4px 0 calc(-38px - var(--page-gap));
 }
 
 .text-input {
@@ -2038,8 +2038,8 @@ select.text-input {
 @media (max-width: 640px) {
   /* 휴대폰은 좌우 여백을 줄여 표지를 조금 더 크게, 왼쪽 선은 뒤로 버튼과 맞춘다 */
   .page {
+    --page-gap: 20px;
     padding: 24px 16px 48px;
-    gap: 20px;
   }
 
   .shelf {

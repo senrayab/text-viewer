@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { lastReadAt, workProgress, type WorkSummary } from '../lib/library'
 import type { Position } from '../lib/storage'
 import { Cover, workHue } from './Cover'
@@ -14,6 +14,10 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: 'done', label: '다 읽음' },
 ]
 
+// 작품 화면에 들어갔다 돌아오면 보던 탭·스크롤 위치에서 다시 보여준다 (앱을 새로 열면 처음부터)
+let lastFilter: Filter = 'all'
+let lastScroll = 0
+
 interface LibraryProps {
   items: WorkSummary[]
   positions: Record<string, Position>
@@ -25,7 +29,15 @@ interface LibraryProps {
 }
 
 export function Library({ items, positions, onOpen, onDetail, onAdd, onDeleteWorks }: LibraryProps) {
-  const [filter, setFilter] = useState<Filter>('all')
+  const [filter, setFilterState] = useState<Filter>(lastFilter)
+  const setFilter = (value: Filter) => {
+    lastFilter = value
+    setFilterState(value)
+  }
+  const scrollRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = lastScroll
+  }, [])
   // 편집 중이면 표지를 눌러 여러 작품을 고르고 한 번에 지운다
   const [editing, setEditing] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
@@ -75,23 +87,27 @@ export function Library({ items, positions, onOpen, onDetail, onAdd, onDeleteWor
 
   return (
     <>
-      <div className={`page-scroll${editing ? ' editing' : ''}`}>
+      <div
+        ref={scrollRef}
+        className={`page-scroll${editing ? ' editing' : ''}`}
+        onScroll={(e) => (lastScroll = e.currentTarget.scrollTop)}
+      >
         <div className="page library">
+          {/* 작품 화면의 편집 버튼과 같은 모양·자리, 스크롤해도 떠 있다: 연필, 편집 중이면 짙은 원에 체크 */}
+          {items.length > 0 && (
+            <button
+              className={`round-btn hero-edit${editing ? ' dark' : ''}`}
+              onClick={() => (editing ? stopEditing() : setEditing(true))}
+              title={editing ? '편집 끝내기' : '편집'}
+              aria-pressed={editing}
+            >
+              {editing ? <EditDoneIcon /> : <EditIcon />}
+            </button>
+          )}
           <header className="page-head">
             <span className="eyebrow">LIBRARY</span>
             <h1 className="display">내 서재</h1>
             <p>{items.length ? `${items.length}개의 작품` : '아직 담은 작품이 없어요'}</p>
-            {/* 작품 화면의 편집 버튼과 같은 모양·자리: 연필, 편집 중이면 짙은 원에 체크 */}
-            {items.length > 0 && (
-              <button
-                className={`round-btn hero-edit${editing ? ' dark' : ''}`}
-                onClick={() => (editing ? stopEditing() : setEditing(true))}
-                title={editing ? '편집 끝내기' : '편집'}
-                aria-pressed={editing}
-              >
-                {editing ? <EditDoneIcon /> : <EditIcon />}
-              </button>
-            )}
           </header>
 
           <InstallHint />

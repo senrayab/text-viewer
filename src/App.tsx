@@ -31,6 +31,7 @@ import {
   deleteEpisode,
   deleteWork,
   episodeKey,
+  episodeName,
   extractHue,
   groupFiles,
   listLibrary,
@@ -422,13 +423,14 @@ export default function App() {
   const viewerFooter = useMemo(() => {
     if (!episodeNav || episodeNav.summary.episodes.length < 2) return undefined
     const { current, next } = episodeNav
+    const workTitle = episodeNav.summary.work.title
     return (
       <div className="ep-footer">
-        <span className="ep-end">{current.title} 끝</span>
+        <span className="ep-end">{episodeName(current.title, workTitle)} 끝</span>
         {next ? (
           <button className="next-ep" onClick={() => openEpisode(next)}>
             <span>
-              <small>다음 편</small> {next.title}
+              <small>다음 편</small> {episodeName(next.title, workTitle)}
             </span>
             <NextIcon />
           </button>
@@ -441,7 +443,7 @@ export default function App() {
 
   const docTitle = episodeNav
     ? episodeNav.summary.episodes.length > 1
-      ? `${episodeNav.summary.work.title} · ${episodeNav.current.title}`
+      ? `${episodeNav.summary.work.title} · ${episodeName(episodeNav.current.title, episodeNav.summary.work.title)}`
       : episodeNav.summary.work.title
     : doc?.name
 

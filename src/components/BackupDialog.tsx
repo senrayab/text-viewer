@@ -26,6 +26,11 @@ interface BackupDialogProps {
 
 type Busy = 'connect' | 'backup' | 'restore' | 'delete' | null
 
+/** 구글 계정인 건 알고 있으니 @ 뒤는 빼고 보여준다 */
+function accountName(email: string) {
+  return email.split('@')[0]
+}
+
 const ERRORS: Record<string, string> = {
   'google-unavailable': '구글에 연결할 수 없어요. 인터넷 연결을 확인해 주세요.',
   'popup_closed': '로그인 창이 닫혔어요.',
@@ -167,32 +172,27 @@ export function BackupDialog({ onClose, onRestored, autoAuth }: BackupDialogProp
         ) : (
           <>
             <div className="opt-list">
-              <div className="opt">
+              {/* 켜면 구글 계정을 연결하고, 끄면 연결을 해제한다 (드라이브의 백업은 남는다) */}
+              <label className="opt">
                 <span className="opt-main">
                   <span className="opt-icon">
                     <AccountIcon size={18} />
                   </span>
-                  <span className="opt-title">계정</span>
-                </span>
-                {account ? (
-                  <span className="backup-account">
-                    <span className="email">{account}</span>
-                    {signedIn ? (
-                      <button className="text-btn" onClick={unlink} disabled={!!busy}>
-                        연결 해제
-                      </button>
-                    ) : (
-                      <button className="text-btn" onClick={connect} disabled={!!busy}>
-                        {busy === 'connect' ? '연결 중…' : '다시 연결'}
-                      </button>
-                    )}
+                  <span className="opt-text">
+                    <span className="opt-title">구글 계정 연결</span>
+                    <span className="opt-desc">
+                      {busy === 'connect' ? '연결 중…' : account ? accountName(account) : '연결하면 백업할 수 있어요'}
+                    </span>
                   </span>
-                ) : (
-                  <button className="pill small" onClick={connect} disabled={!!busy}>
-                    {busy === 'connect' ? '연결 중…' : '구글 계정 연결'}
-                  </button>
-                )}
-              </div>
+                </span>
+                <button
+                  role="switch"
+                  aria-checked={account !== null}
+                  className={`switch${account !== null || busy === 'connect' ? ' on' : ''}`}
+                  onClick={() => (account !== null ? unlink() : connect())}
+                  disabled={!!busy}
+                />
+              </label>
               <div className="opt">
                 <span className="opt-main">
                   <span className="opt-icon">
