@@ -38,6 +38,7 @@ import {
   loadEpisodeFile,
   parseEpisodeNames,
   prepareCover,
+  rematchWorks,
   updateWork,
   type Episode,
   type PendingGroup,
@@ -330,7 +331,11 @@ export default function App() {
         known,
       )
       const pending = items.map(({ file, buffer }, i) => ({ file, buffer, parsed: parsed[i] }))
-      setAdding(groupFiles(pending, library.map((s) => s.work)))
+      const rematched = rematchWorks(
+        library,
+        items.map(({ file }) => file.name),
+      )
+      setAdding(groupFiles(pending, library.map((s) => s.work), rematched))
     },
     [library],
   )
@@ -366,7 +371,15 @@ export default function App() {
       known,
     )
     const pending = items.map(({ file, buffer }, i) => ({ file, buffer, parsed: parsed[i] }))
-    confirmAdd([{ target, title: '', files: groupFiles(pending, []).flatMap((g) => g.files) }])
+    // "제목 1"로 담겼던 작품에 "제목 2"를 더하면 작품 이름도 "제목"으로 고친다
+    const summary = library.find((s) => s.work.id === target)
+    const retitle = summary
+      ? rematchWorks(
+          [summary],
+          items.map(({ file }) => file.name),
+        ).get(pending[0]?.parsed.base.toLowerCase() ?? '')?.retitle
+      : undefined
+    confirmAdd([{ target, title: '', retitle, files: groupFiles(pending, []).flatMap((g) => g.files) }])
   }
 
   const workSummary = view.name === 'work' ? library.find((s) => s.work.id === view.workId) : undefined

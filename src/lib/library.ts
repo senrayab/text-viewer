@@ -69,6 +69,12 @@ export interface ParsedName {
   label: string
   /** 정렬 순서 — 알아볼 수 없는 이름이면 없다 */
   order?: number
+  /**
+   * 제목의 일부일 수도 있는 표시로 읽었을 때, 파일명 전체를 제목으로 본 결과.
+   * 단위 없는 번호("습관 1234", "쿠소에로1004"), 괄호 없는 한 글자 표시("그 후", "나와 그 외", "제목 +", "제목 완") 등.
+   * 같은 작품 이름의 다른 파일이 함께 없으면 이쪽을 쓴다 (parseEpisodeNames).
+   */
+  asTitle?: ParsedName
 }
 
 const SEP = String.raw`[\s_\-.·]`
@@ -141,31 +147,39 @@ function orderOf(kind: EpisodeKind, number = 0, part = 0) {
 export function parseEpisodeName(fileName: string): ParsedName {
   const name = fileName.replace(/\.[^.]+$/, '').trim()
   let rest = name
+  // 제목의 일부일 수도 있는 표시로 읽었는지 — 그러면 파일명 전체를 제목으로 본 결과도 함께 둔다
+  let weak = false
+  const bracketed = (marker: string) => /[([]/.test(marker)
+  const finish = (result: ParsedName): ParsedName => (weak ? { ...result, asTitle: { base: name, label: name } } : result)
 
-  // 1. 완결 표시
+  // 1. 완결 표시 — 괄호 없는 "완", "end" 등은 제목일 수도 있다 ("완결"은 확실한 표시로 본다)
   let complete = false
   const done = rest.match(COMPLETE_PATTERN)
   if (done && cleanBase(done[1])) {
+    const marker = rest.slice(done[1].length)
+    if (!bracketed(marker) && !marker.includes('완결')) weak = true
     rest = done[1]
     complete = true
   }
 
-  // 2. 나뉜 편 (상·중·하 …)
+  // 2. 나뉜 편 (상·중·하 …) — 괄호 없는 한 글자("그 후", "위와 아래 하")는 제목일 수도 있다
   let part: number | undefined
   let partLabel = ''
   const split = rest.match(PART_PATTERN)
   if (split && cleanBase(split[1])) {
+    if (split[3] && split[3].length === 1) weak = true
     ;[part, partLabel] = PART_RANK[split[2] ?? split[3]]
     rest = split[1]
   }
   const tail = (partLabel ? ` ${partLabel}` : '') + (complete ? ' (완)' : '')
 
-  // 3. 프롤로그·에필로그·외전
+  // 3. 프롤로그·에필로그·외전 — 괄호 없는 한 글자 표시("나와 그 외", "제목 +")는 제목일 수도 있다
   const special = rest.match(SPECIAL_PATTERN)
   if (special && cleanBase(special[1])) {
     const [kind, word] = SPECIAL_KIND[special[2]]
     const number = special[3] ? Number(special[3]) : undefined
-    return {
+    if ([...special[2]].length === 1 && !bracketed(rest.slice(special[1].length))) weak = true
+    return finish({
       base: cleanBase(special[1]),
       kind,
       number,
@@ -173,7 +187,7 @@ export function parseEpisodeName(fileName: string): ParsedName {
       complete,
       label: `${word}${number !== undefined ? ` ${number}` : ''}${tail}`,
       order: orderOf(kind, number, part),
-    }
+    })
   }
 
   // 4. 번호
@@ -183,7 +197,7 @@ export function parseEpisodeName(fileName: string): ParsedName {
   if (titled && cleanBase(titled[1])) {
     const [kind, word] = SPECIAL_KIND[titled[2]] ?? ['side', titled[2]]
     const number = titled[3] ? Number(titled[3]) : undefined
-    return {
+    return finish({
       base: cleanBase(titled[1]),
       kind,
       number,
@@ -191,11 +205,15 @@ export function parseEpisodeName(fileName: string): ParsedName {
       complete,
       label: `${word}${number !== undefined ? ` ${number}` : ''} ${titled[4].trim()}${tail}`,
       order: orderOf(kind, number, part),
-    }
+    })
   }
+  // 5. 번호 없이 나뉜 편("소설 상")은 본편, 번호 없이 완결 표시만 있으면("소설 (완)") 완결편
   if (numbered && cleanBase(numbered[1])) {
     const number = Number(numbered[2])
-    return {
+    // 단위(화·편 …)도 괄호도 "제"도 없는 번호("습관 1234", "쿠소에로1004")는 제목의 일부일 수도 있다
+    const marker = rest.slice(numbered[1].length)
+    if (!numbered[3] && !bracketed(marker) && !marker.includes('제')) weak = true
+    return finish({
       base: cleanBase(numbered[1]),
       kind: 'main',
       number,
@@ -203,17 +221,13 @@ export function parseEpisodeName(fileName: string): ParsedName {
       complete,
       label: `${number}${numbered[3] ?? '편'}${tail}`,
       order: orderOf('main', number, part),
-    }
+    })
   }
 
-  // 5. 번호 없이 나뉜 편("소설 상")은 본편, 번호 없이 완결 표시만 있으면("소설 (완)") 완결편
   if (part !== undefined) {
-    return { base: cleanBase(rest), kind: 'main', part, complete, label: partLabel + (complete ? ' (완)' : ''), order: orderOf('main', 0, part) }
+    return finish({ base: cleanBase(rest), kind: 'main', part, complete, label: partLabel + (complete ? ' (완)' : ''), order: orderOf('main', 0, part) })
   }
-  if (complete) {
-    return { base: cleanBase(rest), kind: 'final', complete, label: '완결', order: orderOf('final') }
-  }
-
+  if (complete) return finish({ base: cleanBase(rest), kind: 'final', complete, label: '완결', order: orderOf('final') })
   return { base: name, label: name }
 }
 
@@ -221,16 +235,30 @@ export function parseEpisodeName(fileName: string): ParsedName {
  * 파일명을 한꺼번에 읽는다. 1편에는 번호를 안 붙이고 2편부터 "제목 (2)", "제목 (3)"처럼 붙이는 경우가 많아서,
  * 번호 없는 "제목"이 같은 이름의 2편 이후와 함께 있으면(1편은 없을 때) 그 파일을 1편으로 본다.
  * 2편 이후는 없고 외전 등만 함께 있으면 번호 없는 "제목"은 본편으로 본다.
+ * 제목의 일부일 수도 있는 표시("습관 1234", "쿠소에로1004", "그 후", "나와 그 외", "제목 +")는
+ * 같은 작품 이름의 다른 파일이 함께 있을 때만 편 표시로 보고, 아니면 파일명 전체를 제목으로 본다.
  * known: 함께 따져 볼 다른 파일명(이미 서재에 있는 편 등) — 결과에는 들어가지 않는다
  */
 export function parseEpisodeNames(names: string[], known: string[] = []): ParsedName[] {
-  const parsed = names.map(parseEpisodeName)
+  const all = [...names, ...known].map(parseEpisodeName)
+  // 작품 이름 후보마다 몇 개의 파일이 그 이름을 가리키는지 (제목 전체로 본 경우도 센다:
+  // "쿠소에로1004 +"는 "쿠소에로1004"를 가리키고, "쿠소에로1004"는 제목 전체로 보면 그 이름이 된다)
+  const count = new Map<string, number>()
+  const add = (key: string) => count.set(key, (count.get(key) ?? 0) + 1)
+  for (const p of all) {
+    add(p.base.toLowerCase())
+    if (p.asTitle && p.asTitle.base.toLowerCase() !== p.base.toLowerCase()) add(p.asTitle.base.toLowerCase())
+  }
+  for (const [i, p] of all.entries()) {
+    if (p.asTitle && (count.get(p.base.toLowerCase()) ?? 0) < 2) all[i] = p.asTitle
+  }
+  const parsed = all.slice(0, names.length)
   // 작품 이름 → 2편 이후에 쓴 단위(화·편 …), 1편이 이미 있는 작품 이름
   const later = new Map<string, string>()
   const hasFirst = new Set<string>()
   // 작품 이름 → 번호·종류를 읽어 낸 다른 편이 있는지
   const hasSiblings = new Set<string>()
-  for (const p of [...parsed, ...known.map(parseEpisodeName)]) {
+  for (const p of all) {
     if (p.kind) hasSiblings.add(p.base.toLowerCase())
     if (p.kind !== 'main' || p.number === undefined) continue
     const key = p.base.toLowerCase()
@@ -275,17 +303,47 @@ export interface PendingGroup {
   /** 새 작품일 때의 이름 */
   title: string
   files: PendingFile[]
+  /** 기존 작품에 담을 때 작품 이름을 이것으로 고친다 ("제목 1"로 담겼던 작품에 "제목 2"가 들어와 "제목"이 된 경우) */
+  retitle?: string
+}
+
+/**
+ * 새로 담는 파일과 함께 다시 읽었을 때 기존 작품이 가리키는 작품 이름.
+ * 처음에 "제목 1" 하나만 담으면 작품 이름이 "제목 1"이 되는데, 나중에 "제목 2"가 들어오면 둘 다 "제목"의 편이 된다.
+ * 작품 이름이 그 편의 파일명 그대로였으면(직접 바꾸지 않았으면) 새 이름으로 고칠 수 있게 함께 알려준다.
+ */
+export function rematchWorks(library: WorkSummary[], newNames: string[]) {
+  const matches = new Map<string, { workId: string; retitle?: string }>()
+  for (const { work, episodes } of library) {
+    if (!episodes.length) continue
+    const parsed = parseEpisodeNames(
+      episodes.map((e) => e.fileName),
+      newNames,
+    )
+    episodes.forEach((e, i) => {
+      const key = parsed[i].base.toLowerCase()
+      if (key === work.title.toLowerCase() || matches.has(key)) return
+      const plain = e.fileName.replace(/\.[^.]+$/, '').trim()
+      matches.set(key, { workId: work.id, retitle: work.title.toLowerCase() === plain.toLowerCase() ? parsed[i].base : undefined })
+    })
+  }
+  return matches
 }
 
 /** 파일명이 같은 작품 이름을 가진 파일끼리 묶고, 같은 이름의 작품이 서재에 있으면 그 작품을 고른다 */
-export function groupFiles(files: PendingFile[], works: Work[]): PendingGroup[] {
+export function groupFiles(
+  files: PendingFile[],
+  works: Work[],
+  rematched: Map<string, { workId: string; retitle?: string }> = new Map(),
+): PendingGroup[] {
   const groups = new Map<string, PendingGroup>()
   for (const f of files) {
     const key = f.parsed.base.toLowerCase()
     let group = groups.get(key)
     if (!group) {
       const existing = works.find((w) => w.title.toLowerCase() === key)
-      group = { target: existing?.id ?? 'new', title: f.parsed.base, files: [] }
+      const again = existing ? undefined : rematched.get(key)
+      group = { target: existing?.id ?? again?.workId ?? 'new', title: f.parsed.base, files: [], retitle: again?.retitle }
       groups.set(key, group)
     }
     group.files.push(f)
@@ -439,7 +497,7 @@ export async function addToLibrary(groups: PendingGroup[]) {
     } else {
       const existing = await request<Work | undefined>(works.get(group.target))
       if (!existing) continue
-      work = { ...existing, updatedAt: now }
+      work = { ...existing, ...(group.retitle ? { title: group.retitle } : {}), updatedAt: now }
     }
     works.put(work)
 
