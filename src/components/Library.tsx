@@ -2,7 +2,7 @@ import { useMemo, useState, type CSSProperties } from 'react'
 import { lastReadAt, workProgress, type WorkSummary } from '../lib/library'
 import type { Position } from '../lib/storage'
 import { Cover, workHue } from './Cover'
-import { CheckIcon, EditIcon, EditDoneIcon, MoreIcon, PlusIcon, RecentDotIcon, TrashIcon } from './Icons'
+import { CheckIcon, EditDoneIcon, EditIcon, MoreIcon, PlusIcon, RecentDotIcon, TrashIcon } from './Icons'
 import { InstallHint } from './InstallHint'
 
 type Filter = 'all' | 'reading' | 'unread' | 'done'
