@@ -95,6 +95,11 @@ export default function App() {
   }, [])
   useEffect(() => saveSettings(settings), [settings])
 
+  // 이미지 없는 표지의 색 (styles.css의 [data-cover])
+  useEffect(() => {
+    document.documentElement.dataset.cover = settings.cover
+  }, [settings.cover])
+
   const theme = useResolvedTheme(settings.theme)
   useEffect(() => {
     document.documentElement.dataset.theme = theme

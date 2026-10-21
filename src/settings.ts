@@ -1,9 +1,12 @@
 export type ThemeChoice = 'system' | 'light' | 'sepia' | 'dark'
 export type FontChoice = 'sans' | 'serif' | 'mono'
 export type WidthChoice = 'narrow' | 'normal' | 'wide' | 'full'
+/** 이미지 없는 표지의 색: 앱 기본색(지금은 청록) 하나로 통일하거나, 제목마다 다른 파스텔 색 */
+export type CoverChoice = 'ink' | 'pastel'
 
 export interface Settings {
   theme: ThemeChoice
+  cover: CoverChoice
   font: FontChoice
   fontSize: number
   lineHeight: number
@@ -16,6 +19,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
+  cover: 'ink',
   font: 'sans',
   fontSize: 16,
   lineHeight: 1.7,
@@ -30,6 +34,11 @@ export const THEMES: { value: ThemeChoice; label: string }[] = [
   { value: 'light', label: '라이트' },
   { value: 'sepia', label: '세피아' },
   { value: 'dark', label: '다크' },
+]
+
+export const COVERS: { value: CoverChoice; label: string }[] = [
+  { value: 'ink', label: '기본' },
+  { value: 'pastel', label: '파스텔' },
 ]
 
 // 이모지는 Tossface로 그린다. 반드시 본문 글꼴 뒤에 둬야 한다 —

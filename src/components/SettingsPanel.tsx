@@ -1,7 +1,7 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { PRIVACY_URL, TERMS_URL } from '../config'
 import { connectedAccount, driveConfigured, preloadGoogle } from '../lib/drive'
-import { FONT_SIZE, FONTS, LINE_HEIGHT, THEMES, WIDTHS, clamp, type Settings } from '../settings'
+import { COVERS, FONT_SIZE, FONTS, LINE_HEIGHT, THEMES, WIDTHS, clamp, type Settings } from '../settings'
 import {
   ChevronIcon,
   CloseIcon,
@@ -213,6 +213,15 @@ export function SettingsPanel({ settings, onChange, onClose, leaving, onOpenBack
           options={THEMES.map((t) => ({ ...t, lead: <span className={`theme-dot theme-dot-${t.value}`} /> }))}
           value={settings.theme}
           onChange={(v) => onChange('theme', v)}
+        />
+      </Section>
+
+      {/* 이미지를 등록한 표지는 어느 쪽이든 그 이미지로 보인다 */}
+      <Section title="Cover">
+        <Segmented
+          options={COVERS.map((c) => ({ ...c, lead: <span className={`theme-dot cover-dot-${c.value}`} /> }))}
+          value={settings.cover}
+          onChange={(v) => onChange('cover', v)}
         />
       </Section>
 

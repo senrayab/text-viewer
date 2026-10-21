@@ -822,6 +822,14 @@ mark.active {
   background: #161616;
 }
 
+/* 표지 탭의 색 동그라미 */
+.cover-dot-ink {
+  background: linear-gradient(160deg, #3d6c76, #0f2a30) border-box;
+}
+.cover-dot-pastel {
+  background: conic-gradient(#e5a7c0, #b9a6e3, #9fc8e6, #a8d8b0, #e8d49a, #e5a7c0) border-box;
+}
+
 .segmented {
   display: flex;
   gap: 2px;
@@ -1643,6 +1651,19 @@ mark.active {
   background-position: center;
   box-shadow: 0 12px 22px -8px hsl(var(--h) 30% 25% / 0.45), 0 1px 2px rgba(0, 0, 0, 0.08);
   text-align: left;
+}
+
+/* 기본: 이미지 없는 표지를 제목 색 대신 앱의 짙은 청록 하나로 그린다.
+   뒤 무대(옅은 받침)는 이미지를 등록한 표지도 같은 청록 계열로 맞춰 서재 전체가 한 톤으로 보이게 한다. */
+[data-cover='ink'] .cover:not(.image) {
+  background: linear-gradient(160deg, #3d6c76, #143840);
+  box-shadow: 0 12px 22px -8px rgba(11, 34, 40, 0.5), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+[data-cover='ink'] .book,
+[data-cover='ink'] .page.work {
+  /* 작품마다 인라인으로 주는 색상값(--h)보다 앞서야 한다 */
+  --h: 190 !important;
 }
 
 /* 책등 */
