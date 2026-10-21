@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, type Settings } from '../settings'
+import { COVERS, DEFAULT_SETTINGS, type Settings } from '../settings'
 
 const SETTINGS_KEY = 'text-viewer:settings'
 const POSITIONS_KEY = 'text-viewer:positions'
@@ -8,7 +8,11 @@ const MAX_POSITIONS = 1000
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY)
-    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS
+    if (!raw) return DEFAULT_SETTINGS
+    const settings: Settings = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+    // 없어진 표지 색(예전 기본이던 청록 'ink')은 지금 기본으로 바꾼다
+    if (!COVERS.some((c) => c.value === settings.cover)) settings.cover = DEFAULT_SETTINGS.cover
+    return settings
   } catch {
     return DEFAULT_SETTINGS
   }

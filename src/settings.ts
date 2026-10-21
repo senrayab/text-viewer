@@ -1,8 +1,8 @@
 export type ThemeChoice = 'system' | 'light' | 'sepia' | 'dark'
 export type FontChoice = 'sans' | 'serif' | 'mono'
 export type WidthChoice = 'narrow' | 'normal' | 'wide' | 'full'
-/** 이미지 없는 표지의 색: 앱 기본색(지금은 청록) 하나로 통일하거나, 제목마다 다른 파스텔 색 */
-export type CoverChoice = 'ink' | 'pastel'
+/** 이미지 없는 표지의 색: 기본(웜 샌드)·모노(슬레이트 그레이)는 한 색으로 통일, 파스텔은 제목마다 다른 색 */
+export type CoverChoice = 'sand' | 'mono' | 'pastel'
 
 export interface Settings {
   theme: ThemeChoice
@@ -19,7 +19,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
-  cover: 'ink',
+  cover: 'sand',
   font: 'sans',
   fontSize: 16,
   lineHeight: 1.7,
@@ -37,7 +37,8 @@ export const THEMES: { value: ThemeChoice; label: string }[] = [
 ]
 
 export const COVERS: { value: CoverChoice; label: string }[] = [
-  { value: 'ink', label: '기본' },
+  { value: 'sand', label: '기본' },
+  { value: 'mono', label: '모노' },
   { value: 'pastel', label: '파스텔' },
 ]
 

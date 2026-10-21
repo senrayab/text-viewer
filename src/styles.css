@@ -825,8 +825,11 @@ mark.active {
 }
 
 /* 표지 탭의 색 동그라미 */
-.cover-dot-ink {
-  background: linear-gradient(160deg, #3d6c76, #0f2a30) border-box;
+.cover-dot-sand {
+  background: linear-gradient(160deg, #ddd2c1, #bfae94) border-box;
+}
+.cover-dot-mono {
+  background: linear-gradient(160deg, #97a1ab, #66717c) border-box;
 }
 .cover-dot-pastel {
   background: conic-gradient(#e5a7c0, #b9a6e3, #9fc8e6, #a8d8b0, #e8d49a, #e5a7c0) border-box;
@@ -1882,17 +1885,54 @@ mark.active {
   text-align: left;
 }
 
-/* 기본: 이미지 없는 표지를 제목 색 대신 앱의 짙은 청록 하나로 그린다.
-   뒤 무대(옅은 받침)는 이미지를 등록한 표지도 같은 청록 계열로 맞춰 서재 전체가 한 톤으로 보이게 한다. */
-[data-cover='ink'] .cover:not(.image) {
-  background: linear-gradient(160deg, #3d6c76, #143840);
-  box-shadow: 0 12px 22px -8px rgba(11, 34, 40, 0.5), 0 1px 2px rgba(0, 0, 0, 0.08);
+/* 기본(웜 샌드)·모노(슬레이트 그레이): 이미지 없는 표지를 제목 색 대신 한 색으로 그린다.
+   앱의 짙은 청록 버튼(+ 등)이 표지 사이에서 묻히지 않도록 표지는 버튼과 다른 계열로 둔다.
+   뒤 받침은 이미지를 등록한 표지도 같은 톤으로 맞춰 서재 전체가 한 톤으로 보이게 한다. */
+[data-cover='sand'] {
+  --cover-a: #ddd2c1;
+  --cover-b: #bfae94;
+  --cover-title: #3f3226;
+  --cover-shadow: rgba(90, 70, 40, 0.3);
+  --cover-stage: #ece7df;
 }
 
-[data-cover='ink'] .book,
-[data-cover='ink'] .page.work {
-  /* 작품마다 인라인으로 주는 색상값(--h)보다 앞서야 한다 */
-  --h: 190 !important;
+[data-cover='sand'][data-theme='dark'] {
+  /* 어두운 화면에서 튀지 않게 한 톤 낮춘다 */
+  --cover-a: #a99b84;
+  --cover-b: #86775f;
+  --cover-title: #241d14;
+  --cover-shadow: rgba(0, 0, 0, 0.45);
+  --cover-stage: #2a2722;
+}
+
+[data-cover='mono'] {
+  --cover-a: #97a1ab;
+  --cover-b: #66717c;
+  --cover-title: #ffffff;
+  --cover-shadow: rgba(40, 48, 58, 0.35);
+  --cover-stage: #e5e8ec;
+}
+
+[data-cover='mono'][data-theme='dark'] {
+  --cover-shadow: rgba(0, 0, 0, 0.45);
+  --cover-stage: #24282d;
+}
+
+[data-cover='sand'] .cover:not(.image),
+[data-cover='mono'] .cover:not(.image) {
+  background: linear-gradient(160deg, var(--cover-a), var(--cover-b));
+  box-shadow: 0 12px 22px -8px var(--cover-shadow), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+[data-cover='sand'] .cover:not(.image) .cover-title,
+[data-cover='mono'] .cover:not(.image) .cover-title {
+  color: var(--cover-title);
+  text-shadow: none;
+}
+
+[data-cover='sand'] .book-stage,
+[data-cover='mono'] .book-stage {
+  background: var(--cover-stage);
 }
 
 /* 책등 */
