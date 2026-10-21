@@ -9,7 +9,6 @@ import {
   CircleCheck,
   CircleDashed,
   CircleDotDashed,
-  CircleSmall,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -90,8 +89,6 @@ export const ReadingIcon = icon(CircleDotDashed, 18)
 export const DoneIcon = icon(CircleCheck, 18)
 export const CheckIcon = icon(Check, 14)
 
-/** 서재에서 최근에 읽은 작품 표시 — 선 대신 채운 작은 점 */
-export const RecentDotIcon = () => <CircleSmall size={12} strokeWidth={0} fill="currentColor" aria-hidden />
 export const PhoneIcon = icon(Smartphone, 18)
 export const ShareIcon = icon(Share, 14)
 

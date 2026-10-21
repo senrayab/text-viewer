@@ -1283,6 +1283,112 @@ mark.active {
   color: var(--muted);
 }
 
+/* 최근 읽은 글: 한 줄 알림 — 누르면 서재에서 그 작품 자리로 */
+.recent-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--raise);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--ui-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.recent-bar-icon {
+  flex: none;
+  display: inline-flex;
+  color: var(--brand);
+}
+
+.recent-bar-label {
+  flex: none;
+  color: var(--muted);
+}
+
+.recent-bar-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-bar > svg:last-child {
+  flex: none;
+  color: var(--faint);
+}
+
+/* 최근 읽은 글로 이동했을 때 잠깐 테두리로 표시 */
+.book.flash .book-stage {
+  animation: book-flash 1.6s ease-out;
+}
+
+@keyframes book-flash {
+  0%,
+  55% {
+    box-shadow: 0 0 0 2px var(--brand);
+  }
+}
+
+/* 오른쪽 가나다 레일: 스크롤할 때만 흐리게 나타난다 */
+.index-rail {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  z-index: 14;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 22px;
+  padding: 6px 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 75%, transparent);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  touch-action: none;
+  transform: translateY(-50%);
+  transition: opacity 0.25s;
+}
+
+.index-rail.shown {
+  opacity: 0.9;
+  pointer-events: auto;
+}
+
+.index-rail span {
+  padding: 3.5px 0;
+}
+
+/* 레일을 누르는 동안 가운데에 지금 글자 */
+.index-bubble {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 15;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 26px;
+  font-weight: 600;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
 .lib-none {
   margin: 8px 0;
   font-size: var(--ui-md);
@@ -1485,14 +1591,6 @@ mark.active {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* 최근에 읽은 작품: 제목 앞의 주황 점 */
-.recent-dot {
-  flex: none;
-  display: inline-flex;
-  margin-left: -2px;
-  color: var(--brand);
 }
 
 .book-sub {

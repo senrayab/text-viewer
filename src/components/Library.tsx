@@ -1,8 +1,17 @@
-import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 import { lastReadAt, workProgress, type WorkSummary } from '../lib/library'
 import type { Position } from '../lib/storage'
 import { Cover, workHue } from './Cover'
-import { CheckIcon, EditDoneIcon, EditIcon, MoreIcon, PlusIcon, RecentDotIcon, TrashIcon } from './Icons'
+import {
+  CheckIcon,
+  ChevronIcon,
+  EditDoneIcon,
+  EditIcon,
+  MoreIcon,
+  PlusIcon,
+  RecentIcon,
+  TrashIcon,
+} from './Icons'
 import { InstallHint } from './InstallHint'
 
 type Filter = 'all' | 'reading' | 'unread' | 'done'
@@ -13,6 +22,28 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: 'unread', label: '읽기 전' },
   { value: 'done', label: '다 읽음' },
 ]
+
+// ── 가나다순과 오른쪽 레일 ──
+// 레일 칸: ㄱ~ㅎ, 영문(A), 그 밖의 글자·숫자(#). 서재도 이 순서로 놓는다.
+const INITIALS = ['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ', 'A', '#']
+// 첫소리 19개를 레일의 14칸으로 (된소리는 예사소리 칸에)
+const JAMO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'
+const JAMO_TO_RAIL = 'ㄱㄱㄴㄷㄷㄹㅁㅂㅂㅅㅅㅇㅈㅈㅊㅋㅌㅍㅎ'
+// 레일이 스크롤을 멈춘 뒤 이만큼 지나면 사라진다
+const RAIL_HIDE_MS = 1200
+
+/** 제목 첫 글자가 레일의 몇 번째 칸인지 */
+function initialIndex(title: string) {
+  const ch = title.trim().charAt(0)
+  const code = ch.charCodeAt(0)
+  if (code >= 0xac00 && code <= 0xd7a3) return INITIALS.indexOf(JAMO_TO_RAIL[Math.floor((code - 0xac00) / 588)])
+  const jamo = JAMO.indexOf(ch)
+  if (jamo >= 0) return INITIALS.indexOf(JAMO_TO_RAIL[jamo])
+  if (/[a-z]/i.test(ch)) return INITIALS.indexOf('A')
+  return INITIALS.length - 1
+}
+
+const collator = new Intl.Collator('ko', { numeric: true, sensitivity: 'base' })
 
 // 작품 화면에 들어갔다 돌아오면 보던 탭·스크롤 위치에서 다시 보여준다 (앱을 새로 열면 처음부터)
 let lastFilter: Filter = 'all'
@@ -55,21 +86,26 @@ export function Library({ items, positions, onOpen, onDetail, onAdd, onDeleteWor
       return next
     })
 
-  // 최근에 읽었거나 담은 작품이 앞에 온다
-  const sorted = useMemo(() => {
-    const activity = (s: WorkSummary) => Math.max(lastReadAt(s, positions), s.work.updatedAt)
-    return [...items]
-      .sort((a, b) => activity(b) - activity(a))
-      .map((summary) => ({ summary, progress: workProgress(summary, positions) }))
+  // 가나다순 (ㄱ~ㅎ, 영문, 그 밖의 순서)
+  const sorted = useMemo(
+    () =>
+      items
+        .map((summary) => ({ summary, progress: workProgress(summary, positions), initial: initialIndex(summary.work.title) }))
+        .sort((a, b) => a.initial - b.initial || collator.compare(a.summary.work.title, b.summary.work.title)),
+    [items, positions],
+  )
+
+  // 가장 최근에 읽은 작품 — 위쪽 한 줄 알림으로 보여주고, 누르면 그 작품 자리로 간다
+  const recentRead = useMemo(() => {
+    let best: WorkSummary | undefined
+    let at = 0
+    for (const s of items) {
+      const t = lastReadAt(s, positions)
+      if (t > at) [best, at] = [s, t]
+    }
+    return best
   }, [items, positions])
 
-  // 가장 최근에 읽다 만 작품 — 제목 앞에 점으로 표시한다
-  const recentId = useMemo(() => {
-    const reading = sorted.filter(({ progress }) => progress.started && !progress.done)
-    if (!reading.length) return undefined
-    return reading.reduce((a, b) => (lastReadAt(b.summary, positions) > lastReadAt(a.summary, positions) ? b : a))
-      .summary.work.id
-  }, [sorted, positions])
 
   const visible = sorted.filter(({ progress }) => {
     if (filter === 'reading') return progress.started && !progress.done
@@ -77,6 +113,70 @@ export function Library({ items, positions, onOpen, onDetail, onAdd, onDeleteWor
     if (filter === 'done') return progress.done
     return true
   })
+
+  // ── 작품 자리로 스크롤 ──
+  const shelfRef = useRef<HTMLUListElement>(null)
+  const scrollToBook = (id: string, smooth: boolean) => {
+    const scroller = scrollRef.current
+    const book = shelfRef.current?.querySelector(`[data-id="${id}"]`)
+    if (!scroller || !book) return
+    const top = book.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 16
+    scroller.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' })
+  }
+
+  // 최근 읽은 글로: 지금 탭에서 안 보이면 "전체"로 바꾼 뒤 그 자리로 가서 잠깐 표시한다
+  const [flashId, setFlashId] = useState<string>()
+  const goRecent = () => {
+    if (!recentRead) return
+    if (!visible.some(({ summary }) => summary.work.id === recentRead.work.id)) setFilter('all')
+    setFlashId(recentRead.work.id)
+  }
+  useEffect(() => {
+    if (!flashId) return
+    scrollToBook(flashId, true)
+    const timer = setTimeout(() => setFlashId(undefined), 1600)
+    return () => clearTimeout(timer)
+  }, [flashId])
+
+  // ── 오른쪽 가나다 레일: 스크롤할 때 나타났다가 멈추면 사라진다. 누르거나 끌면 그 글자의 첫 작품으로 ──
+  const [railShown, setRailShown] = useState(false)
+  const [bubble, setBubble] = useState<string>()
+  const railRef = useRef<HTMLDivElement>(null)
+  const railTimer = useRef(0)
+  const scrubbing = useRef(false)
+  const picked = useRef(-1)
+  const showRail = () => {
+    setRailShown(true)
+    clearTimeout(railTimer.current)
+    railTimer.current = window.setTimeout(() => !scrubbing.current && setRailShown(false), RAIL_HIDE_MS)
+  }
+  useEffect(() => () => clearTimeout(railTimer.current), [])
+
+  const pickInitial = (clientY: number) => {
+    const rail = railRef.current
+    if (!rail) return
+    const box = rail.getBoundingClientRect()
+    const index = Math.min(INITIALS.length - 1, Math.max(0, Math.floor(((clientY - box.top) / box.height) * INITIALS.length)))
+    if (index === picked.current) return
+    picked.current = index
+    setBubble(INITIALS[index])
+    // 그 글자로 시작하는 작품이 없으면 다음 글자의 첫 작품으로
+    const target = visible.find((v) => v.initial >= index) ?? visible[visible.length - 1]
+    if (target) scrollToBook(target.summary.work.id, false)
+  }
+  const railDown = (e: PointerEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    scrubbing.current = true
+    picked.current = -1
+    e.currentTarget.setPointerCapture(e.pointerId)
+    pickInitial(e.clientY)
+    showRail()
+  }
+  const railUp = () => {
+    scrubbing.current = false
+    setBubble(undefined)
+    showRail()
+  }
 
   const allSelected = visible.length > 0 && visible.every(({ summary }) => selected.has(summary.work.id))
 
@@ -90,7 +190,10 @@ export function Library({ items, positions, onOpen, onDetail, onAdd, onDeleteWor
       <div
         ref={scrollRef}
         className={`page-scroll${editing ? ' editing' : ''}`}
-        onScroll={(e) => (lastScroll = e.currentTarget.scrollTop)}
+        onScroll={(e) => {
+          lastScroll = e.currentTarget.scrollTop
+          showRail()
+        }}
       >
         <div className="page library">
           {/* 작품 화면의 편집 버튼과 같은 모양·자리, 스크롤해도 떠 있다: 연필, 편집 중이면 짙은 원에 체크 */}
@@ -109,6 +212,17 @@ export function Library({ items, positions, onOpen, onDetail, onAdd, onDeleteWor
             <h1 className="display">내 서재</h1>
             <p>{items.length ? `${items.length}개의 작품` : '아직 담은 작품이 없어요'}</p>
           </header>
+
+          {recentRead && (
+            <button className="recent-bar" onClick={goRecent}>
+              <span className="recent-bar-icon">
+                <RecentIcon />
+              </span>
+              <span className="recent-bar-label">최근 읽은 글</span>
+              <span className="recent-bar-title">{recentRead.work.title}</span>
+              <ChevronIcon />
+            </button>
+          )}
 
           <InstallHint />
 
@@ -142,7 +256,7 @@ export function Library({ items, positions, onOpen, onDetail, onAdd, onDeleteWor
               {visible.length === 0 ? (
                 <p className="lib-none">이 조건에 맞는 작품이 없어요.</p>
               ) : (
-                <ul className="shelf">
+                <ul className="shelf" ref={shelfRef}>
                   {visible.map(({ summary: s, progress }) => {
                     const count = s.episodes.length
                     const percent = progress.done ? 100 : progress.percent
@@ -150,7 +264,8 @@ export function Library({ items, positions, onOpen, onDetail, onAdd, onDeleteWor
                     return (
                       <li
                         key={s.work.id}
-                        className={`book${editing ? ' selecting' : ''}${checked ? ' checked' : ''}`}
+                        data-id={s.work.id}
+                        className={`book${editing ? ' selecting' : ''}${checked ? ' checked' : ''}${flashId === s.work.id ? ' flash' : ''}`}
                         style={{ '--h': workHue(s.work) } as CSSProperties}
                       >
                         <button
@@ -171,11 +286,6 @@ export function Library({ items, positions, onOpen, onDetail, onAdd, onDeleteWor
                         <div className="book-meta">
                           <div className="book-text">
                             <div className="book-title">
-                              {s.work.id === recentId && (
-                                <span className="recent-dot" title="최근에 읽은 작품">
-                                  <RecentDotIcon />
-                                </span>
-                              )}
                               <span>{s.work.title}</span>
                             </div>
                             {/* 편수는 표지의 배지에 있으니, 여기는 읽은 정도만 한 줄로 (읽기 전이면 0%) */}
@@ -201,6 +311,22 @@ export function Library({ items, positions, onOpen, onDetail, onAdd, onDeleteWor
           )}
         </div>
       </div>
+      {visible.length > 0 && (
+        <div
+          ref={railRef}
+          className={`index-rail${railShown ? ' shown' : ''}`}
+          onPointerDown={railDown}
+          onPointerMove={(e) => scrubbing.current && pickInitial(e.clientY)}
+          onPointerUp={railUp}
+          onPointerCancel={railUp}
+          aria-hidden
+        >
+          {INITIALS.map((ch) => (
+            <span key={ch}>{ch}</span>
+          ))}
+        </div>
+      )}
+      {bubble && <div className="index-bubble">{bubble}</div>}
       {editing ? (
         // 편집 중: 아래에 고르기·지우기 막대
         <div className="select-bar">

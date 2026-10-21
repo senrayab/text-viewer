@@ -228,6 +228,8 @@ export function parseEpisodeName(fileName: string): ParsedName {
     return finish({ base: cleanBase(rest), kind: 'main', part, complete, label: partLabel + (complete ? ' (완)' : ''), order: orderOf('main', 0, part) })
   }
   if (complete) return finish({ base: cleanBase(rest), kind: 'final', complete, label: '완결', order: orderOf('final') })
+  // 숫자만으로 된 이름("1", "10")은 작품 이름으로 두되, 한 작품에 모으면 숫자 순서로 놓이게 한다
+  if (/^\d+(?:\.\d+)?$/.test(name)) return { base: name, label: name, order: orderOf('main', Number(name)) }
   return { base: name, label: name }
 }
 
@@ -278,8 +280,10 @@ export function parseEpisodeNames(names: string[], known: string[] = []): Parsed
 export function episodeName(title: string, workTitle: string) {
   const work = workTitle.trim()
   if (!work || !title.toLowerCase().startsWith(work.toLowerCase())) return title
-  const rest = title.slice(work.length).replace(/^[\s_\-.·]+/, '').trim()
-  return rest || title
+  const rest = title.slice(work.length)
+  // 작품 이름 바로 뒤가 띄어쓰기 등으로 끊길 때만 뗀다 (작품 "1"의 편 "10"을 "0"으로 만들지 않게)
+  if (rest && !/^[\s_\-.·]/.test(rest)) return title
+  return rest.replace(/^[\s_\-.·]+/, '').trim() || title
 }
 
 const collator = new Intl.Collator('ko', { numeric: true })
