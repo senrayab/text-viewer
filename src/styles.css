@@ -1347,7 +1347,11 @@ mark.active {
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* 글자마다 같은 높이의 칸 — 누른 위치를 칸으로 바꾸는 계산(Library의 pickInitial)과 맞는다 */
+  justify-content: space-around;
   width: 22px;
+  /* 글자 사이를 넉넉히(칸 약 30px), 화면이 낮으면 위아래 여유를 남기고 줄어든다 */
+  height: min(480px, calc(100% - 120px));
   padding: 6px 0;
   border-radius: 999px;
   background: color-mix(in srgb, var(--surface) 75%, transparent);
@@ -1367,7 +1371,9 @@ mark.active {
 }
 
 .index-rail span {
-  padding: 3.5px 0;
+  flex: 1;
+  display: grid;
+  place-items: center;
 }
 
 /* 레일을 누르는 동안 가운데에 지금 글자 */
