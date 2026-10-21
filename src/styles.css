@@ -9,6 +9,8 @@
   /* 진행 막대 두께 (서재·작품 화면 공통) */
   --bar-h: 3px;
   /* Tossface는 반드시 본문 글꼴 뒤에 둔다 — 앞에 두면 Chrome이 숫자까지 Tossface로 그린다 */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ui-font: 'Pretendard Variable', Pretendard, Tossface, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
 
@@ -942,17 +944,244 @@ mark.active {
   font-size: var(--ui-sm);
 }
 
-/* 파일을 끌어다 놓는 점선 영역 — 흰 바탕에 점선 테두리 */
+/* 파일을 끌어다 놓는 점선 영역 — 흰 바탕에 점선 테두리.
+   큰 파일을 읽는 동안에는 같은 자리에서 실선 카드로 바뀐다 (두 내용을 한 칸에 겹쳐 둔다) */
 .drop-zone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 36px 24px 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   border: 1.5px dashed var(--faint);
   border-radius: 22px;
   background: var(--surface);
   text-align: center;
+  transition: opacity 0.26s var(--ease-out), transform 0.32s var(--ease-out);
+}
+
+.drop-zone > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.drop-idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 36px 24px 28px;
+  transition: opacity 0.2s, transform 0.34s var(--ease-out);
+}
+
+.drop-zone.loading {
+  border-style: solid;
+  border-color: var(--border);
+}
+
+.drop-zone.loading .drop-idle {
+  opacity: 0;
+  transform: scale(0.97);
+  pointer-events: none;
+}
+
+.drop-load {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 28px 24px 22px;
+  animation: load-in 0.34s var(--ease-out) 0.1s both;
+}
+
+@keyframes load-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* 주황 파일 아이콘(둘레를 링이 돈다) → 다 읽으면 청록 원 체크가 살짝 튀어 나온다 */
+.load-badge {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 8px;
+}
+
+.load-badge > span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  transition: opacity 0.2s, transform 0.42s var(--ease-pop);
+}
+
+.load-file {
+  background: var(--brand-tint);
+  color: var(--brand);
+}
+
+.load-file::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--brand);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.load-done {
+  background: var(--ink);
+  color: var(--on-ink);
+  opacity: 0;
+  transform: scale(0.4);
+}
+
+.load-msg {
+  position: relative;
+  height: 44px;
+}
+
+.load-msg > div {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.22s, transform 0.3s var(--ease-out);
+}
+
+.load-msg strong {
+  display: block;
+  font-size: var(--ui-lg);
+  font-weight: 700;
+}
+
+.load-msg p {
+  margin: 4px 0 0;
+  font-size: var(--ui-sm);
+  color: var(--muted);
+}
+
+.msg-done {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.load-file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 12px 8px 12px 14px;
+  border-radius: 14px;
+  background: var(--soft);
+  text-align: left;
+}
+
+.load-file-icon {
+  flex: none;
+  display: grid;
+  color: var(--brand);
+}
+
+.load-file-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.load-file-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.load-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--ui-md);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.load-pct,
+.load-size {
+  font-size: var(--ui-xs);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.load-track {
+  height: 4px;
+  margin: 7px 0 6px;
+  border-radius: 99px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.load-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink);
+  transition: width 0.18s linear;
+}
+
+.load-cancel {
+  flex: none;
+  transition: opacity 0.2s;
+}
+
+.drop-zone.done .load-file,
+.drop-zone.leave .load-file {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.drop-zone.done .load-done,
+.drop-zone.leave .load-done {
+  opacity: 1;
+  transform: none;
+}
+
+.drop-zone.done .msg-loading,
+.drop-zone.leave .msg-loading {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.drop-zone.done .msg-done,
+.drop-zone.leave .msg-done {
+  opacity: 1;
+  transform: none;
+}
+
+.drop-zone.done .load-cancel,
+.drop-zone.leave .load-cancel {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 본문으로 넘어가기 직전: 카드가 살짝 커지며 흐려진다 */
+.drop-zone.leave {
+  opacity: 0;
+  transform: scale(1.03);
+}
+
+/* 카드에서 넘어온 본문은 아래에서 떠오르며 나타난다 */
+.doc-enter .reader,
+.doc-enter .toolbar {
+  animation: doc-enter 0.42s var(--ease-out) both;
+}
+
+@keyframes doc-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
 }
 
 .drop-icon {
@@ -2214,24 +2443,86 @@ select.text-input {
 
 /* ── 기타 ─────────────────────────────────── */
 
+/* 파일을 끌고 들어오면 화면 전체에 "여기에 놓아서 열기"가 부드럽게 나타난다.
+   뒤 글자가 비치지 않도록 바탕을 진하게, 흐림을 크게 둔다 */
 .drop-overlay {
   position: fixed;
   inset: 0;
   z-index: 100;
   display: grid;
   padding: 16px;
-  background: var(--overlay);
-  backdrop-filter: blur(2px);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(6px);
   pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0s 0.2s;
 }
 
-.drop-overlay div {
+.drop-overlay.on {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.2s;
+}
+
+.drop-overlay > div {
   display: grid;
   place-items: center;
+  align-content: center;
+  gap: 12px;
   border: 2px dashed var(--accent);
   border-radius: 18px;
   font-size: var(--ui-lg);
+  font-weight: 600;
   color: var(--fg);
+  transform: scale(0.97);
+  transition: transform 0.3s var(--ease-out);
+}
+
+.drop-overlay.on > div {
+  transform: none;
+}
+
+.drop-overlay span {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand-tint);
+  color: var(--brand);
+  animation: bob 1.2s ease-in-out infinite;
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* 동작 줄이기: 움직임 없이 흐려지기만 한다 */
+@media (prefers-reduced-motion: reduce) {
+  .drop-overlay > div,
+  .drop-overlay span,
+  .drop-idle,
+  .drop-zone,
+  .load-msg > div,
+  .load-badge > span {
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .drop-load,
+  .doc-enter .reader,
+  .doc-enter .toolbar {
+    animation-name: fade-in !important;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
 }
 
 .focus-exit {

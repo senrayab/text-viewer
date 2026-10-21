@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AddDialog } from './components/AddDialog'
 import { BackupDialog } from './components/BackupDialog'
 import { connectedAccount, isSignedIn, signIn } from './lib/drive'
-import { EmptyState } from './components/EmptyState'
+import { EmptyState, type FileLoad } from './components/EmptyState'
 import { GotoBar } from './components/GotoBar'
 import {
   BackIcon,
@@ -44,6 +44,7 @@ import {
   type PendingGroup,
   type WorkSummary,
 } from './lib/library'
+import { readWithProgress } from './lib/readFile'
 import { findMatches } from './lib/search'
 import { HOME, historyDepth, parseRoute, pushRoute, replaceRoute, type Route, type View } from './lib/route'
 import {
@@ -84,6 +85,15 @@ const ACCEPT = '.txt,.text,.log,text/plain'
 const HEADER_H = 64
 // 이만큼 이어서 내려 읽으면 머리를 숨기고, 이만큼 올리면 다시 보인다
 const HEADER_SWAY = 24
+
+// 처음 화면에서 고른 파일이 이보다 오래 걸려 읽히면 불러오는 카드를 보여준다 (금방 열리는 파일은 깜빡이지 않게)
+const LOAD_CARD_DELAY = 300
+// 카드: 다 찬 막대를 잠깐 보여주고 → 체크로 바뀐 뒤 머물고 → 사라지는 시간 (styles.css의 .drop-zone.loading과 맞춘다)
+const LOAD_FULL_MS = 250
+const LOAD_DONE_MS = 650
+const LOAD_LEAVE_MS = 260
+
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 // 설정 시트가 아래로 내려가며 닫히는 시간 (styles.css의 .panel.leaving과 같다)
 const SHEET_LEAVE_MS = 220
@@ -129,6 +139,13 @@ export default function App() {
   const [gotoOpen, setGotoOpen] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
   const [dragging, setDragging] = useState(false)
+  /** 처음 화면에서 큰 파일을 읽는 중 */
+  const [fileLoad, setFileLoad] = useState<FileLoad | null>(null)
+  const loadAbort = useRef<AbortController | null>(null)
+  /** 불러오는 카드에서 넘어온 본문은 아래에서 떠오르며 나타난다 */
+  const [docEnter, setDocEnter] = useState(false)
+  /** 지금 처음 화면인지 — 여기서 고른 파일만 불러오는 카드를 보여준다 */
+  const atHomeRef = useRef(false)
   const [progress, setProgress] = useState(0)
   const [toast, setToast] = useState<{ text: string; ms: number } | null>(null)
   const [recent, setRecent] = useState<RecentEntry>()
@@ -155,7 +172,44 @@ export default function App() {
 
   const openFile = useCallback(async (file: File, handle?: FileSystemFileHandle, episode?: Episode) => {
     try {
-      const buffer = await file.arrayBuffer()
+      let buffer: ArrayBuffer
+      if (atHomeRef.current && !episode) {
+        loadAbort.current?.abort()
+        const ctrl = new AbortController()
+        loadAbort.current = ctrl
+        let loaded = 0
+        let shown = false
+        const timer = setTimeout(() => {
+          shown = true
+          setFileLoad({ name: file.name, size: file.size, loaded, stage: 'loading' })
+        }, LOAD_CARD_DELAY)
+        const read = await readWithProgress(
+          file,
+          (n) => {
+            loaded = n
+            if (shown) setFileLoad((l) => l && { ...l, loaded: n })
+          },
+          ctrl.signal,
+        ).finally(() => clearTimeout(timer))
+        if (!read || ctrl.signal.aborted) return
+        if (shown) {
+          setFileLoad((l) => l && { ...l, loaded: file.size })
+          await wait(LOAD_FULL_MS)
+          if (ctrl.signal.aborted) return
+          setFileLoad((l) => l && { ...l, stage: 'done' })
+          await wait(LOAD_DONE_MS)
+          if (ctrl.signal.aborted) return
+          setFileLoad((l) => l && { ...l, stage: 'leave' })
+          await wait(LOAD_LEAVE_MS)
+          if (ctrl.signal.aborted) return
+          setDocEnter(true)
+        }
+        loadAbort.current = null
+        buffer = read
+      } else {
+        buffer = await file.arrayBuffer()
+      }
+      setFileLoad(null)
       setDoc({
         key: `${file.name}:${file.size}:${file.lastModified}`,
         name: file.name,
@@ -175,9 +229,22 @@ export default function App() {
       const route = parseRoute()
       if (!route.reading) pushRoute({ ...route, reading: true })
     } catch {
+      setFileLoad(null)
       setError('파일을 읽을 수 없습니다.')
     }
   }, [])
+
+  const cancelLoad = useCallback(() => {
+    loadAbort.current?.abort()
+    loadAbort.current = null
+    setFileLoad(null)
+  }, [])
+
+  useEffect(() => {
+    if (!docEnter) return
+    const id = setTimeout(() => setDocEnter(false), 600)
+    return () => clearTimeout(id)
+  }, [docEnter])
 
   // 지금 보는 문서는 새로고침 복원용으로 항상 저장한다
   useEffect(() => {
@@ -199,6 +266,7 @@ export default function App() {
   // 아래 effect가 곧바로 덮어쓰므로 새로고침 전 상태는 첫 렌더에서 한 번만 읽어 둔다
   const [initialSession] = useState(() => loadSessionState<SessionState>())
   const [view, setView] = useState<View>(() => parseRoute().view)
+  atHomeRef.current = !doc && view.name === 'home'
   const [library, setLibrary] = useState<WorkSummary[]>([])
   const [libraryLoaded, setLibraryLoaded] = useState(false)
   const [positions, setPositions] = useState(readPositions)
@@ -777,7 +845,7 @@ export default function App() {
   const activeLine = search.matches[activeMatch]?.line ?? -1
 
   return (
-    <div className={`app${focusMode ? ' focus' : ''}`}>
+    <div className={`app${focusMode ? ' focus' : ''}${docEnter ? ' doc-enter' : ''}`}>
       <header
         className={`toolbar${doc ? ' reading' : ''}${doc && headerTucked && !searchOpen && !menuOpen ? ' tucked' : ''}`}
       >
@@ -906,7 +974,14 @@ export default function App() {
             }}
           />
         ) : (
-          <EmptyState onOpen={pickFile} recentName={recent?.name} onOpenRecent={openRecent} error={error} />
+          <EmptyState
+            onOpen={pickFile}
+            recentName={recent?.name}
+            onOpenRecent={openRecent}
+            error={error}
+            load={fileLoad}
+            onCancelLoad={cancelLoad}
+          />
         )}
 
         {searchOpen && (
@@ -1025,11 +1100,14 @@ export default function App() {
         />
       )}
 
-      {dragging && (
-        <div className="drop-overlay">
-          <div>여기에 놓아서 열기</div>
+      <div className={`drop-overlay${dragging ? ' on' : ''}`} aria-hidden>
+        <div>
+          <span>
+            <FileIcon size={22} />
+          </span>
+          여기에 놓아서 열기
         </div>
-      )}
+      </div>
 
       <input
         ref={fileInputRef}
