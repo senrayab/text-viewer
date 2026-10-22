@@ -826,7 +826,7 @@ mark.active {
 
 /* 표지 탭의 색 동그라미 */
 .cover-dot-sand {
-  background: linear-gradient(160deg, #ddd2c1, #bfae94) border-box;
+  background: linear-gradient(160deg, #dcd8d2, #b9b2a8) border-box;
 }
 .cover-dot-mono {
   background: linear-gradient(160deg, #97a1ab, #66717c) border-box;
@@ -1885,24 +1885,24 @@ mark.active {
   text-align: left;
 }
 
-/* 기본(웜 샌드)·모노(슬레이트 그레이): 이미지 없는 표지를 제목 색 대신 한 색으로 그린다.
+/* 기본(회베이지)·모노(슬레이트 그레이): 이미지 없는 표지를 제목 색 대신 한 색으로 그린다.
    앱의 짙은 청록 버튼(+ 등)이 표지 사이에서 묻히지 않도록 표지는 버튼과 다른 계열로 둔다.
    뒤 받침은 이미지를 등록한 표지도 같은 톤으로 맞춰 서재 전체가 한 톤으로 보이게 한다. */
 [data-cover='sand'] {
-  --cover-a: #ddd2c1;
-  --cover-b: #bfae94;
-  --cover-title: #3f3226;
-  --cover-shadow: rgba(90, 70, 40, 0.3);
-  --cover-stage: #ece7df;
+  --cover-a: #dcd8d2;
+  --cover-b: #b9b2a8;
+  --cover-title: #3b3732;
+  --cover-shadow: rgba(60, 54, 46, 0.28);
+  --cover-stage: #e9e7e3;
 }
 
 [data-cover='sand'][data-theme='dark'] {
   /* 어두운 화면에서 튀지 않게 한 톤 낮춘다 */
-  --cover-a: #a99b84;
-  --cover-b: #86775f;
-  --cover-title: #241d14;
+  --cover-a: #a29c93;
+  --cover-b: #7f786f;
+  --cover-title: #1f1c19;
   --cover-shadow: rgba(0, 0, 0, 0.45);
-  --cover-stage: #2a2722;
+  --cover-stage: #272624;
 }
 
 [data-cover='mono'] {
@@ -2415,6 +2415,52 @@ select.text-input {
 .pill:disabled {
   opacity: 0.45;
   cursor: default;
+}
+
+/* 백업·불러오기 중인 버튼은 흐리게 하지 않고, 앞에 진행 동그라미를 둔다 */
+.modal-actions button.busy:disabled {
+  opacity: 1;
+}
+
+.modal-actions button.busy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-ring {
+  flex: none;
+  transform: rotate(-90deg);
+}
+
+.progress-ring circle {
+  fill: none;
+  stroke-width: 2.25;
+}
+
+.ring-track {
+  stroke: currentColor;
+  opacity: 0.25;
+}
+
+.ring-fill {
+  stroke: currentColor;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.25s ease-out;
+}
+
+.progress-ring.spin {
+  animation: ring-spin 0.9s linear infinite;
+}
+
+@keyframes ring-spin {
+  from {
+    transform: rotate(-90deg);
+  }
+  to {
+    transform: rotate(270deg);
+  }
 }
 
 .modal-actions {

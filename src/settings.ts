@@ -1,7 +1,7 @@
 export type ThemeChoice = 'system' | 'light' | 'sepia' | 'dark'
 export type FontChoice = 'sans' | 'serif' | 'mono'
 export type WidthChoice = 'narrow' | 'normal' | 'wide' | 'full'
-/** 이미지 없는 표지의 색: 기본(웜 샌드)·모노(슬레이트 그레이)는 한 색으로 통일, 파스텔은 제목마다 다른 색 */
+/** 이미지 없는 표지의 색: 기본(회베이지)·모노(슬레이트 그레이)는 한 색으로 통일, 파스텔은 제목마다 다른 색 */
 export type CoverChoice = 'sand' | 'mono' | 'pastel'
 
 export interface Settings {

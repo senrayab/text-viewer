@@ -102,32 +102,55 @@ export function disconnect() {
   if (value) window.google?.accounts?.oauth2?.revoke?.(value, () => {})
 }
 
-async function api(path: string, init: RequestInit = {}) {
+/** 올리거나 내려받은 정도 (0~1) */
+export type OnProgress = (ratio: number) => void
+
+function authHeader() {
   if (!token || !isSignedIn()) throw new Error('signed-out')
+  return `Bearer ${token.value}`
+}
+
+/** 실패한 응답을 화면에 보여줄 오류 코드로 바꾼다 */
+function driveError(status: number, body: string) {
+  if (status === 401) {
+    token = null
+    return new Error('signed-out')
+  }
+  let reason = ''
+  try {
+    const json = JSON.parse(body)
+    reason = json?.error?.errors?.[0]?.reason ?? json?.error?.status ?? ''
+  } catch {
+    // 본문이 JSON이 아니면 상태 코드만 쓴다
+  }
+  if (/accessNotConfigured|SERVICE_DISABLED/i.test(reason)) return new Error('api-disabled')
+  if (status === 403 && /insufficient|PERMISSION_DENIED/i.test(reason)) {
+    token = null
+    return new Error('scope-denied')
+  }
+  return new Error(`drive-${status}${reason ? ` ${reason}` : ''}`)
+}
+
+async function api(path: string, init: RequestInit = {}) {
   const res = await fetch(API + path, {
     ...init,
-    headers: { ...init.headers, Authorization: `Bearer ${token.value}` },
+    headers: { ...init.headers, Authorization: authHeader() },
   })
-  if (res.status === 401) {
-    token = null
-    throw new Error('signed-out')
-  }
-  if (!res.ok) {
-    let reason = ''
-    try {
-      const body = await res.json()
-      reason = body?.error?.errors?.[0]?.reason ?? body?.error?.status ?? ''
-    } catch {
-      // 본문이 JSON이 아니면 상태 코드만 쓴다
-    }
-    if (/accessNotConfigured|SERVICE_DISABLED/i.test(reason)) throw new Error('api-disabled')
-    if (res.status === 403 && /insufficient|PERMISSION_DENIED/i.test(reason)) {
-      token = null
-      throw new Error('scope-denied')
-    }
-    throw new Error(`drive-${res.status}${reason ? ` ${reason}` : ''}`)
-  }
+  if (!res.ok) throw driveError(res.status, await res.text().catch(() => ''))
   return res
+}
+
+/** 올린 양을 알 수 있도록 fetch 대신 XMLHttpRequest로 보낸다 */
+function send(method: string, path: string, body: Blob | FormData, onProgress?: OnProgress) {
+  return new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open(method, API + path)
+    xhr.setRequestHeader('Authorization', authHeader())
+    if (onProgress) xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total)
+    xhr.onload = () => (xhr.status < 300 ? resolve() : reject(driveError(xhr.status, xhr.responseText)))
+    xhr.onerror = () => reject(new Error('network'))
+    xhr.send(body)
+  })
 }
 
 export interface DriveBackup {
@@ -144,10 +167,10 @@ export async function findBackup(): Promise<DriveBackup | undefined> {
 }
 
 /** 백업 파일은 하나만 둔다 — 있으면 덮어쓰고, 없으면 새로 만든다 */
-export async function uploadBackup(blob: Blob) {
+export async function uploadBackup(blob: Blob, onProgress?: OnProgress) {
   const existing = await findBackup()
   if (existing) {
-    await api(`/upload/drive/v3/files/${existing.id}?uploadType=media`, { method: 'PATCH', body: blob })
+    await send('PATCH', `/upload/drive/v3/files/${existing.id}?uploadType=media`, blob, onProgress)
     return
   }
   const form = new FormData()
@@ -156,7 +179,7 @@ export async function uploadBackup(blob: Blob) {
     new Blob([JSON.stringify({ name: FILE_NAME, parents: ['appDataFolder'] })], { type: 'application/json' }),
   )
   form.append('file', blob)
-  await api('/upload/drive/v3/files?uploadType=multipart', { method: 'POST', body: form })
+  await send('POST', '/upload/drive/v3/files?uploadType=multipart', form, onProgress)
 }
 
 /** 드라이브 앱 전용 공간의 백업 파일을 지운다 (숨겨진 공간이라 드라이브 목록에서는 지울 수 없다) */
@@ -164,6 +187,20 @@ export async function deleteBackup(id: string) {
   await api(`/drive/v3/files/${id}`, { method: 'DELETE' })
 }
 
-export async function downloadBackup(id: string) {
-  return (await api(`/drive/v3/files/${id}?alt=media`)).blob()
+/** size: 백업 정보에서 알고 있는 크기 (응답에 길이가 없을 때 진행률을 재는 데 쓴다) */
+export async function downloadBackup(id: string, size = 0, onProgress?: OnProgress) {
+  const res = await api(`/drive/v3/files/${id}?alt=media`)
+  const total = Number(res.headers.get('Content-Length')) || size
+  if (!onProgress || !total || !res.body) return res.blob()
+  const reader = res.body.getReader()
+  const chunks: Uint8Array[] = []
+  let loaded = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value)
+    loaded += value.length
+    onProgress(Math.min(1, loaded / total))
+  }
+  return new Blob(chunks)
 }

@@ -31,6 +31,25 @@ function accountName(email: string) {
   return email.split('@')[0]
 }
 
+/** 버튼 안의 동그라미: 진행률을 알면 외곽선이 그만큼 채워지고, 모르면(준비·저장 중) 짧은 호가 돈다 */
+function ProgressRing({ value }: { value: number | null }) {
+  const r = 7
+  const c = 2 * Math.PI * r
+  return (
+    <svg className={`progress-ring${value === null ? ' spin' : ''}`} width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+      <circle cx="9" cy="9" r={r} className="ring-track" />
+      <circle
+        cx="9"
+        cy="9"
+        r={r}
+        className="ring-fill"
+        strokeDasharray={c}
+        strokeDashoffset={c * (1 - (value ?? 0.25))}
+      />
+    </svg>
+  )
+}
+
 const ERRORS: Record<string, string> = {
   'google-unavailable': '구글에 연결할 수 없어요. 인터넷 연결을 확인해 주세요.',
   'popup_closed': '로그인 창이 닫혔어요.',
@@ -41,6 +60,7 @@ const ERRORS: Record<string, string> = {
   'scope-denied':
     '드라이브 접근이 허용되지 않았어요. 다시 연결할 때 “Google Drive에서 이 앱의 구성 데이터 보기 및 관리”에 체크해 주세요.',
   'api-disabled': '이 앱의 Google Cloud 프로젝트에서 Google Drive API가 꺼져 있어요.',
+  network: '인터넷 연결이 끊겼어요. 연결을 확인하고 다시 시도해 주세요.',
 }
 
 function errorMessage(e: unknown) {
@@ -60,6 +80,8 @@ export function BackupDialog({ onClose, onRestored, autoAuth }: BackupDialogProp
   /** undefined: 아직 모름, null: 백업 없음 */
   const [backup, setBackup] = useState<DriveBackup | null>()
   const [busy, setBusy] = useState<Busy>(null)
+  /** 올리거나 내려받은 정도 — null이면 아직 모르는 단계(준비·저장) */
+  const [progress, setProgress] = useState<number | null>(null)
   const [message, setMessage] = useState<{ text: string; error?: boolean }>()
 
   const loadInfo = useCallback(async () => {
@@ -77,6 +99,7 @@ export function BackupDialog({ onClose, onRestored, autoAuth }: BackupDialogProp
   // 로그인 창은 버튼을 누른 처리 안에서 곧바로 띄워야 막히지 않는다 — 그래서 signIn()을 먼저 부른다
   const run = (kind: Busy, task: () => Promise<void>, auth = signIn()) => {
     setBusy(kind)
+    setProgress(null)
     setMessage(undefined)
     auth
       .then(() => {
@@ -113,7 +136,8 @@ export function BackupDialog({ onClose, onRestored, autoAuth }: BackupDialogProp
   const backupNow = () =>
     run('backup', async () => {
       const { blob, works, episodes } = await createBackup()
-      await uploadBackup(blob)
+      await uploadBackup(blob, setProgress)
+      setProgress(null)
       await loadInfo()
       setMessage({ text: `백업했어요 · 작품 ${works}개, ${episodes}편` })
     })
@@ -125,7 +149,9 @@ export function BackupDialog({ onClose, onRestored, autoAuth }: BackupDialogProp
     )
     if (!ok) return
     run('restore', async () => {
-      const summary = await restoreBackup(await downloadBackup(backup.id))
+      const blob = await downloadBackup(backup.id, backup.size, setProgress)
+      setProgress(null)
+      const summary = await restoreBackup(blob)
       onRestored(summary)
     })
   }
@@ -226,11 +252,29 @@ export function BackupDialog({ onClose, onRestored, autoAuth }: BackupDialogProp
             {message && <p className={`backup-message${message.error ? ' error' : ''}`}>{message.text}</p>}
 
             <div className="modal-actions">
-              <button className="ghost" onClick={restore} disabled={!backup || !!busy}>
-                {busy === 'restore' ? '불러오는 중…' : '불러오기'}
+              <button
+                className={`ghost${busy === 'restore' ? ' busy' : ''}`}
+                onClick={restore}
+                disabled={!backup || !!busy}
+              >
+                {busy === 'restore' ? (
+                  <>
+                    <ProgressRing value={progress} />
+                    {progress === null ? '불러오는 중…' : `불러오는 중 ${Math.round(progress * 100)}%`}
+                  </>
+                ) : (
+                  '불러오기'
+                )}
               </button>
-              <button className="primary" onClick={backupNow} disabled={!!busy}>
-                {busy === 'backup' ? '백업 중…' : '지금 백업하기'}
+              <button className={`primary${busy === 'backup' ? ' busy' : ''}`} onClick={backupNow} disabled={!!busy}>
+                {busy === 'backup' ? (
+                  <>
+                    <ProgressRing value={progress} />
+                    {progress === null ? '백업 중…' : `백업 중 ${Math.round(progress * 100)}%`}
+                  </>
+                ) : (
+                  '지금 백업하기'
+                )}
               </button>
             </div>
           </>
